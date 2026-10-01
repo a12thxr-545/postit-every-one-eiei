@@ -357,10 +357,8 @@ export default function App() {
       {viewMode === 'home' ? (
         /* Home Landing Page */
         <HomePage
-          rooms={rooms}
           userName={userName}
-          onSelectRoom={changeRoom}
-          onOpenCreateRoom={() => setShowRoomModal(true)}
+          onEnterBoard={() => changeRoom('general')}
           onOpenEditName={() => setShowNameModal(true)}
           isDarkMode={isDarkMode}
           onToggleTheme={() => setIsDarkMode(!isDarkMode)}
