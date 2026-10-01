@@ -82,15 +82,13 @@ export default function NoteModal({ initialData, defaultAuthor, onSave, onClose 
       setError('กรุณาใส่ข้อความ หรือ แนบรูปภาพบน Post-it');
       return;
     }
-    if (!authorName.trim()) {
-      setError('กรุณาระบุชื่อของคุณ (Author name required)');
-      return;
-    }
+
+    const finalAuthor = authorName.trim() || 'ไม่ระบุชื่อ';
 
     onSave({
       content: content.trim(),
       image_url: imageUrl.trim() || null,
-      author_name: authorName.trim(),
+      author_name: finalAuthor,
       color: selectedColor,
       font_style: selectedFont,
     });
@@ -236,7 +234,7 @@ export default function NoteModal({ initialData, defaultAuthor, onSave, onClose 
           <div className="form-group">
             <label className="form-label" htmlFor="note-author-input">
               <User size={14} style={{ display: 'inline', marginRight: 4 }} />
-              ชื่อผู้แปะ Post-it (Author Name)
+              ชื่อผู้แปะ Post-it (ไม่ระบุก็ได้ / Optional)
             </label>
             <input
               id="note-author-input"
@@ -244,7 +242,7 @@ export default function NoteModal({ initialData, defaultAuthor, onSave, onClose 
               className="form-input"
               value={authorName}
               onChange={(e) => setAuthorName(e.target.value)}
-              placeholder="ระบุชื่อของคุณ"
+              placeholder="ไม่ระบุชื่อ (นิรนาม)"
               maxLength={30}
             />
           </div>

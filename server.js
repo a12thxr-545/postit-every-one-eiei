@@ -227,9 +227,7 @@ app.post('/api/rooms/:roomId/notes', async (req, res) => {
     const { roomId } = req.params;
     const { author_name, content, image_url, color, font_style, x_pos, y_pos } = req.body;
 
-    if (!author_name || !author_name.trim()) {
-      return res.status(400).json({ success: false, error: 'กรุณาระบุชื่อผู้เขียน (Author name required)' });
-    }
+    const finalAuthorName = (author_name && author_name.trim()) ? author_name.trim() : 'ไม่ระบุชื่อ';
     if ((!content || !content.trim()) && (!image_url || !image_url.trim())) {
       return res.status(400).json({ success: false, error: 'กรุณาใส่ข้อความหรือแนบรูปภาพบน Post-it' });
     }
@@ -247,7 +245,7 @@ app.post('/api/rooms/:roomId/notes', async (req, res) => {
 
       const { data: newNote, error } = await supabase
         .from('notes')
-        .insert([{ id: noteId, room_id: roomId, author_name: author_name.trim(), content: (content || '').trim(), image_url: image, color: noteColor, font_style: font, x_pos: x, y_pos: y, z_index }])
+        .insert([{ id: noteId, room_id: roomId, author_name: finalAuthorName, content: (content || '').trim(), image_url: image, color: noteColor, font_style: font, x_pos: x, y_pos: y, z_index }])
         .select()
         .single();
       if (error) throw error;
@@ -263,7 +261,7 @@ app.post('/api/rooms/:roomId/notes', async (req, res) => {
       INSERT INTO notes (id, room_id, author_name, content, image_url, color, font_style, x_pos, y_pos, z_index)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
-    stmt.run(noteId, roomId, author_name.trim(), (content || '').trim(), image, noteColor, font, x, y, z_index);
+    stmt.run(noteId, roomId, finalAuthorName, (content || '').trim(), image, noteColor, font, x, y, z_index);
 
     const newNote = db.prepare('SELECT * FROM notes WHERE id = ?').get(noteId);
     broadcast({ type: 'NOTE_CREATED', note: newNote });
