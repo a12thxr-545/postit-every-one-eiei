@@ -25,6 +25,10 @@ export default function AdminPanel({
   onSelectRoom,
   addToast,
 }) {
+  const [adminToken, setAdminToken] = useState(() => sessionStorage.getItem('admin_token') || '');
+  const [passcode, setPasscode] = useState('');
+  const [loginError, setLoginError] = useState('');
+
   const [activeTab, setActiveTab] = useState('rooms'); // 'rooms' | 'notes' | 'system'
   const [stats, setStats] = useState({
     totalRooms: 0,
@@ -34,30 +38,72 @@ export default function AdminPanel({
   });
   const [rooms, setRooms] = useState([]);
   const [notes, setNotes] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [copiedLink, setCopiedLink] = useState(false);
 
   // Fetch full admin overview data
   const fetchAdminData = useCallback(async () => {
+    const token = adminToken || sessionStorage.getItem('admin_token');
+    if (!token) return;
+
     setLoading(true);
     try {
-      const res = await fetch('/api/admin/stats');
+      const res = await fetch('/api/admin/stats', {
+        headers: {
+          'x-admin-secret': token,
+        },
+      });
       const data = await res.json();
+
+      if (res.status === 403 || res.status === 401) {
+        sessionStorage.removeItem('admin_token');
+        sessionStorage.removeItem('is_admin');
+        setAdminToken('');
+        setLoginError('เซสชันแอดมินหมดอายุ กรุณาระบุรหัสผ่านใหม่อีกครั้ง');
+        return;
+      }
 
       if (data.success) {
         setStats(data.stats);
         setRooms(data.rooms);
         setNotes(data.notes);
-      } else {
-        console.error('Failed to fetch admin stats');
       }
     } catch (err) {
       console.error('Admin fetch error:', err);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [adminToken]);
+
+  const handleVerifyPasscode = async (e) => {
+    e.preventDefault();
+    if (!passcode.trim()) {
+      setLoginError('กรุณาระบุรหัสผ่านแอดมิน');
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/admin/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ passcode: passcode.trim() }),
+      });
+      const data = await res.json();
+
+      if (data.success && data.token) {
+        sessionStorage.setItem('admin_token', data.token);
+        sessionStorage.setItem('is_admin', 'true');
+        setAdminToken(data.token);
+        setLoginError('');
+        if (addToast) addToast('ยืนยันสิทธิ์ Super Admin สำเร็จ!');
+      } else {
+        setLoginError(data.error || 'รหัสแอดมินไม่ถูกต้อง');
+      }
+    } catch (err) {
+      setLoginError('ไม่สามารถตรวจสอบสิทธิ์ได้');
+    }
+  };
 
   useEffect(() => {
     fetchAdminData();
@@ -70,7 +116,12 @@ export default function AdminPanel({
     }
 
     try {
-      const res = await fetch(`/api/admin/rooms/${roomId}`, { method: 'DELETE' });
+      const res = await fetch(`/api/admin/rooms/${roomId}`, {
+        method: 'DELETE',
+        headers: {
+          'x-admin-secret': adminToken,
+        },
+      });
       const data = await res.json();
       if (data.success) {
         addToast(`ลบห้อง "${roomName}" เรียบร้อยแล้ว`);
@@ -89,7 +140,12 @@ export default function AdminPanel({
     if (!window.confirm('คุณแน่ใจหรือไม่ที่จะลบ Post-it แผ่นนี้?')) return;
 
     try {
-      const res = await fetch(`/api/notes/${noteId}`, { method: 'DELETE' });
+      const res = await fetch(`/api/notes/${noteId}`, {
+        method: 'DELETE',
+        headers: {
+          'x-admin-secret': adminToken,
+        },
+      });
       const data = await res.json();
       if (data.success) {
         addToast('ลบ Post-it เรียบร้อยแล้ว');
@@ -108,7 +164,12 @@ export default function AdminPanel({
     }
 
     try {
-      const res = await fetch('/api/admin/clear-all-notes', { method: 'DELETE' });
+      const res = await fetch('/api/admin/clear-all-notes', {
+        method: 'DELETE',
+        headers: {
+          'x-admin-secret': adminToken,
+        },
+      });
       const data = await res.json();
       if (data.success) {
         addToast('ลบ Post-it ทั้งหมดบนเว็บไซต์เรียบร้อยแล้ว');
@@ -119,6 +180,13 @@ export default function AdminPanel({
     }
   };
 
+  const handleAdminLogout = () => {
+    sessionStorage.removeItem('admin_token');
+    sessionStorage.removeItem('is_admin');
+    setAdminToken('');
+    addToast('ออกจากสิทธิ์ Admin เรียบร้อยแล้ว');
+  };
+
   const handleCopyAdminUrl = () => {
     const fullUrl = `${window.location.origin}/axthur545eiei`;
     navigator.clipboard.writeText(fullUrl);
@@ -126,6 +194,75 @@ export default function AdminPanel({
     addToast('คัดลอกลิงก์ Admin URL เรียบร้อย');
     setTimeout(() => setCopiedLink(false), 3000);
   };
+
+  if (!adminToken) {
+    return (
+      <div
+        className="admin-container whiteboard-canvas"
+        style={{
+          minHeight: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: 20,
+        }}
+      >
+        <div className="modal-card" style={{ maxWidth: 420, width: '100%', textAlign: 'center' }}>
+          <div
+            style={{
+              width: 56,
+              height: 56,
+              borderRadius: '50%',
+              backgroundColor: 'rgba(236, 72, 153, 0.12)',
+              color: '#ec4899',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 16px auto',
+            }}
+          >
+            <Lock size={28} />
+          </div>
+          <h2 style={{ fontSize: '1.4rem', fontWeight: 800, marginBottom: 6, color: 'var(--text-primary)' }}>
+            Super Admin Verification
+          </h2>
+          <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)', marginBottom: 20 }}>
+            กรุณาระบุรหัสผ่านเพื่อเข้าใช้งานสิทธิ์ Super Admin (/axthur545eiei)
+          </p>
+
+          <form onSubmit={handleVerifyPasscode}>
+            <div className="form-group" style={{ textAlign: 'left' }}>
+              <label className="form-label" htmlFor="admin-passcode-input">
+                รหัสผ่านแอดมิน (Admin Passcode)
+              </label>
+              <input
+                id="admin-passcode-input"
+                type="password"
+                className="form-input"
+                placeholder="ระบุรหัสแอดมิน..."
+                value={passcode}
+                onChange={(e) => {
+                  setPasscode(e.target.value);
+                  setLoginError('');
+                }}
+                autoFocus
+              />
+              {loginError && <span style={{ color: '#ef4444', fontSize: '0.8rem', marginTop: 6, display: 'block' }}>{loginError}</span>}
+            </div>
+
+            <div style={{ display: 'flex', gap: 10, marginTop: 24 }}>
+              <button type="button" className="btn-secondary" style={{ flex: 1 }} onClick={onGoHome}>
+                กลับหน้าหลัก
+              </button>
+              <button type="submit" className="btn-primary" style={{ flex: 1, justifyContent: 'center' }}>
+                ยืนยันรหัสแอดมิน
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    );
+  }
 
   const filteredNotes = notes.filter((n) => {
     if (!searchTerm.trim()) return true;
@@ -213,6 +350,17 @@ export default function AdminPanel({
           >
             <RefreshCw size={16} className={loading ? 'spin' : ''} />
             <span>รีเฟรช</span>
+          </button>
+
+          <button
+            type="button"
+            className="btn-secondary"
+            style={{ color: '#ef4444', borderColor: 'rgba(239, 68, 68, 0.3)' }}
+            onClick={handleAdminLogout}
+            title="ออกจากระบบแอดมิน"
+          >
+            <Lock size={15} />
+            <span>ออกจากสิทธิ์ Admin</span>
           </button>
 
           <button

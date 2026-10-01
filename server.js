@@ -78,10 +78,35 @@ function broadcast(message, senderWs = null) {
   });
 }
 
+// Admin Security Configuration
+const ADMIN_PASSCODE = process.env.ADMIN_PASSCODE || 'axthur545eiei';
+const ADMIN_SECRET_KEY = process.env.ADMIN_SECRET_KEY || 'axthur545eiei_super_secret_key_2026';
+
+function isRequestFromAdmin(req) {
+  const clientSecret = req.headers['x-admin-secret'] || req.headers['x-admin-bypass'] || req.query.admin_secret;
+  return clientSecret === ADMIN_SECRET_KEY || clientSecret === ADMIN_PASSCODE;
+}
+
+function verifyAdminSecret(req, res, next) {
+  if (isRequestFromAdmin(req)) {
+    return next();
+  }
+  return res.status(403).json({ success: false, error: 'Access Denied: Invalid Admin Credentials' });
+}
+
 // API Routes
 
+// Verify Admin Passcode
+app.post('/api/admin/verify', (req, res) => {
+  const { passcode } = req.body;
+  if (passcode === ADMIN_PASSCODE || passcode === ADMIN_SECRET_KEY) {
+    return res.json({ success: true, token: ADMIN_SECRET_KEY });
+  }
+  return res.status(401).json({ success: false, error: 'รหัสผ่านแอดมินไม่ถูกต้อง (Invalid Admin Passcode)' });
+});
+
 // Admin Stats & Overview
-app.get('/api/admin/stats', async (req, res) => {
+app.get('/api/admin/stats', verifyAdminSecret, async (req, res) => {
   try {
     if (isSupabaseConfigured) {
       const { data: roomsData, error: roomsErr } = await supabase.from('rooms').select('id, name, created_at, password, notes(id)');
@@ -156,7 +181,7 @@ app.get('/api/admin/stats', async (req, res) => {
 });
 
 // Admin Delete Room
-app.delete('/api/admin/rooms/:roomId', async (req, res) => {
+app.delete('/api/admin/rooms/:roomId', verifyAdminSecret, async (req, res) => {
   try {
     const { roomId } = req.params;
 
@@ -180,7 +205,7 @@ app.delete('/api/admin/rooms/:roomId', async (req, res) => {
 });
 
 // Admin Clear All Notes
-app.delete('/api/admin/clear-all-notes', async (req, res) => {
+app.delete('/api/admin/clear-all-notes', verifyAdminSecret, async (req, res) => {
   try {
     if (isSupabaseConfigured) {
       const { error } = await supabase.from('notes').delete().neq('id', 'dummy-id-to-delete-all');
@@ -304,7 +329,7 @@ app.post('/api/rooms', async (req, res) => {
 app.get('/api/rooms/:roomId/notes', async (req, res) => {
   try {
     const { roomId } = req.params;
-    const isAdminBypass = req.headers['x-admin-bypass'] === 'true';
+    const isAdminBypass = isRequestFromAdmin(req);
 
     if (isSupabaseConfigured) {
       const { data: room } = await supabase.from('rooms').select('password').eq('id', roomId).single();
