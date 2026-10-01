@@ -79,12 +79,11 @@ export default function HomePage({
               {/* Tape Decorator */}
               <div className="postit-tape" style={{ width: 85, height: 24, top: -12 }} />
 
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', opacity: 0.75, marginBottom: 8 }}>
-                <span style={{ fontSize: '0.8rem', fontWeight: 700 }}>Minimal Board</span>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', opacity: 0.75, marginBottom: 8 }}>
                 <span style={{ fontSize: '0.72rem' }}>Click to continue</span>
               </div>
 
-              {/* Text: write to postit */}
+              {/* Text: write to post it */}
               <div
                 style={{
                   fontFamily: 'var(--font-handwriting)',
@@ -96,7 +95,7 @@ export default function HomePage({
                   margin: '20px 0 28px 0',
                 }}
               >
-                write to postit
+                write to post it
               </div>
 
               {/* Action Hint Pill */}
@@ -238,7 +237,7 @@ export default function HomePage({
 
       {/* Footer */}
       <footer style={{ fontSize: '0.8rem', color: 'var(--text-muted)', textAlign: 'center', paddingBottom: 8 }}>
-        Minimal Post-it Board • Real-time Collaboration
+        Post-it Board • Real-time Collaboration
       </footer>
     </div>
   );
