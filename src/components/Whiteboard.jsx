@@ -37,6 +37,9 @@ export default function Whiteboard({
     }
   };
 
+  // Dynamically calculate board height based on lowest note position
+  const maxNoteY = notes.reduce((max, note) => Math.max(max, (note.y_pos || 0) + 320), 700);
+
   return (
     <div className="whiteboard-canvas" onDoubleClick={handleDoubleClick}>
       {/* Sub-header Toolbar & Search Filter */}
@@ -75,9 +78,9 @@ export default function Whiteboard({
       <div
         className={`whiteboard-board-area ${!isFreeform ? 'grid-container' : ''}`}
         style={{
-          minHeight: 'calc(100vh - 140px)',
+          minHeight: isFreeform ? `${maxNoteY}px` : 'calc(100vh - 140px)',
           position: 'relative',
-          paddingBottom: 100,
+          paddingBottom: 200,
         }}
       >
         {filteredNotes.length === 0 ? (
