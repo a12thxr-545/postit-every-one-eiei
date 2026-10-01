@@ -14,14 +14,17 @@ export default function HomePage({
     <div
       className="home-page-container whiteboard-canvas"
       style={{
-        minHeight: '100vh',
+        minHeight: '100dvh',
+        width: '100%',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'space-between',
         alignItems: 'center',
         padding: '24px 20px',
-        overflow: 'hidden',
+        overflowY: 'auto',
+        overflowX: 'hidden',
         position: 'relative',
+        touchAction: 'pan-y',
       }}
     >
       {/* Header - No Logo as requested */}

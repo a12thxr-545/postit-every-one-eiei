@@ -39,9 +39,10 @@
 
 html, body, #root {
   height: 100%;
+  width: 100%;
   max-width: 100vw;
-  overflow: hidden !important;
-  overscroll-behavior: none;
+  overflow-x: hidden !important;
+  overscroll-behavior-x: none;
   touch-action: pan-y;
 }
 
@@ -66,7 +67,8 @@ body {
   max-width: 100vw;
   display: flex;
   flex-direction: column;
-  overflow: hidden !important;
+  overflow-x: hidden !important;
+  overflow-y: hidden;
 }
 
 /* Background Whiteboard Dot Pattern */
@@ -82,6 +84,7 @@ body {
   overflow-x: hidden !important;
   overflow-y: auto !important;
   -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
 }
 
 /* Header Navbar - Fixed at top */

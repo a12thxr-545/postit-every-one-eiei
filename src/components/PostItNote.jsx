@@ -65,7 +65,7 @@ export default function PostItNote({
     }
   };
 
-  // Handle Mouse Dragging
+  // Handle Mouse / Touch Dragging
   const handleMouseDown = (e) => {
     if (!isFreeform) return;
     if (e.target.closest('button') || e.target.closest('textarea') || e.target.closest('.no-drag')) {
@@ -79,6 +79,23 @@ export default function PostItNote({
     setDragOffset({
       x: e.clientX - rect.left,
       y: e.clientY - rect.top,
+    });
+  };
+
+  const handleTouchStart = (e) => {
+    if (!isFreeform) return;
+    if (e.target.closest('button') || e.target.closest('textarea') || e.target.closest('.no-drag')) {
+      return;
+    }
+
+    onBringToFront(note.id);
+    const touch = e.touches[0];
+    const rect = noteRef.current.getBoundingClientRect();
+    
+    setIsDragging(true);
+    setDragOffset({
+      x: touch.clientX - rect.left,
+      y: touch.clientY - rect.top,
     });
   };
 
@@ -99,7 +116,24 @@ export default function PostItNote({
       onStartDrag(note.id, newX, newY);
     };
 
-    const handleMouseUp = () => {
+    const handleTouchMove = (e) => {
+      if (!isDragging) return;
+      if (e.touches && e.touches.length > 0) {
+        const touch = e.touches[0];
+        const canvas = document.querySelector('.whiteboard-canvas');
+        const canvasRect = canvas ? canvas.getBoundingClientRect() : { left: 0, top: 0 };
+        const scrollLeft = canvas ? canvas.scrollLeft : 0;
+        const scrollTop = canvas ? canvas.scrollTop : 0;
+
+        const maxAllowedX = Math.max(10, (window.innerWidth || 360) - 280);
+        const newX = Math.min(maxAllowedX, Math.max(10, touch.clientX - canvasRect.left + scrollLeft - dragOffset.x));
+        const newY = Math.max(10, touch.clientY - canvasRect.top + scrollTop - dragOffset.y);
+
+        onStartDrag(note.id, newX, newY);
+      }
+    };
+
+    const handleDragEnd = () => {
       if (isDragging) {
         setIsDragging(false);
         onUpdate(note.id, { x_pos: note.x_pos, y_pos: note.y_pos });
@@ -107,10 +141,17 @@ export default function PostItNote({
     };
 
     window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('mouseup', handleMouseUp);
+    window.addEventListener('mouseup', handleDragEnd);
+    window.addEventListener('touchmove', handleTouchMove, { passive: true });
+    window.addEventListener('touchend', handleDragEnd);
+    window.addEventListener('touchcancel', handleDragEnd);
+
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
+      window.removeEventListener('mouseup', handleDragEnd);
+      window.removeEventListener('touchmove', handleTouchMove);
+      window.removeEventListener('touchend', handleDragEnd);
+      window.removeEventListener('touchcancel', handleDragEnd);
     };
   }, [isDragging, dragOffset, note.id, note.x_pos, note.y_pos, onStartDrag, onUpdate]);
 
@@ -136,6 +177,7 @@ export default function PostItNote({
             }
       }
       onMouseDown={handleMouseDown}
+      onTouchStart={handleTouchStart}
       onClick={() => onBringToFront(note.id)}
     >
       {/* Tape Decorator */}
