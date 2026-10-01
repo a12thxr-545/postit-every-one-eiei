@@ -43,6 +43,7 @@ export default function App() {
   const [presetNotePos, setPresetNotePos] = useState(null);
   const [isDarkMode, setIsDarkMode] = useState(() => localStorage.getItem('postit_theme') === 'dark');
   const [isFreeform, setIsFreeform] = useState(() => localStorage.getItem('postit_layout') !== 'grid');
+  const [searchTerm, setSearchTerm] = useState('');
   const [toasts, setToasts] = useState([]);
 
   const wsRef = useRef(null);
@@ -395,6 +396,8 @@ export default function App() {
             userName={userName}
             isDarkMode={isDarkMode}
             isFreeform={isFreeform}
+            searchTerm={searchTerm}
+            setSearchTerm={setSearchTerm}
             onOpenRoomList={() => setShowRoomListModal(true)}
             onOpenCreateRoom={() => setShowRoomModal(true)}
             onOpenCreateNote={() => {
@@ -413,6 +416,8 @@ export default function App() {
             activeRoom={activeRoomObj}
             currentUserName={userName}
             isFreeform={isFreeform}
+            searchTerm={searchTerm}
+            setSearchTerm={setSearchTerm}
             onUpdateNote={handleUpdateNote}
             onDeleteNote={handleDeleteNote}
             onToggleLikeNote={handleToggleLikeNote}

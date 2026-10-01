@@ -239,7 +239,7 @@ export default function PostItNote({
           ? {
               left: `${Math.max(0, note.x_pos || 0)}px`,
               top: `${Math.max(0, note.y_pos || 0)}px`,
-              zIndex: isDragging ? 9999 : isSearchMatched ? 990 : note.z_index || 1,
+              zIndex: isDragging ? 900 : isSearchMatched ? 850 : Math.min(note.z_index || 1, 800),
               transform: isDragging ? 'scale(1.04) rotate(0deg)' : `rotate(${rotation.current}deg)`,
               touchAction: 'none',
             }

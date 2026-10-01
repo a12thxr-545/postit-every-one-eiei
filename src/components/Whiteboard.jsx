@@ -7,6 +7,8 @@ export default function Whiteboard({
   activeRoom,
   currentUserName,
   isFreeform,
+  searchTerm = '',
+  setSearchTerm = () => {},
   onUpdateNote,
   onDeleteNote,
   onToggleLikeNote,
@@ -16,7 +18,6 @@ export default function Whiteboard({
   onOpenCreateNote,
   onViewNote,
 }) {
-  const [searchTerm, setSearchTerm] = useState('');
   const canvasRef = useRef(null);
 
   const filteredNotes = notes.filter((note) => {
@@ -47,7 +48,7 @@ export default function Whiteboard({
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [searchTerm]);
+  }, [searchTerm, setSearchTerm]);
 
   // Auto-scroll to first matching search result
   useEffect(() => {
@@ -87,78 +88,71 @@ export default function Whiteboard({
     }
   };
 
+  const isEmptyDisplay = notes.length === 0 || (searchTerm.trim() && filteredNotes.length === 0);
+
   return (
     <div className="whiteboard-canvas" ref={canvasRef} onDoubleClick={handleDoubleClick}>
-      {/* Sub-header Toolbar & Search Filter */}
+      {/* Sub-header Toolbar Info */}
       <div className="filter-bar">
-        <div className="search-box">
-          <Search size={16} style={{ color: 'var(--text-muted)' }} />
-          <input
-            type="text"
-            placeholder="ค้นหาข้อความ หรือ ชื่อคนแปะ... (Esc เพื่อล้าง)"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-          {searchTerm && (
-            <button
-              onClick={() => setSearchTerm('')}
-              style={{ border: 'none', background: 'none', cursor: 'pointer', opacity: 0.6 }}
-              title="ล้างการค้นหา"
-            >
-              <X size={14} />
-            </button>
-          )}
-        </div>
-
-        <div className="filter-info-group">
-          <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontWeight: 600 }}>
-            <Pin size={14} style={{ color: 'var(--accent-color)' }} />
+        <div className="filter-info-group" style={{ width: '100%', justifyContent: 'space-between' }}>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 600, fontSize: '0.88rem' }}>
+            <Pin size={15} style={{ color: 'var(--accent-color)' }} />
             {searchTerm ? `พบ ${filteredNotes.length} จาก ${notes.length} แผ่น` : `ทั้งหมด ${notes.length} แผ่น`}
           </span>
 
-          {searchTerm && (
-            <button
-              type="button"
-              className="btn-secondary"
-              onClick={() => setSearchTerm('')}
-              style={{ padding: '3px 10px', fontSize: '0.78rem', gap: 4 }}
-            >
-              <X size={13} /> ล้างการค้นหา
-            </button>
-          )}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            {searchTerm && (
+              <button
+                type="button"
+                className="btn-secondary"
+                onClick={() => setSearchTerm('')}
+                style={{ padding: '3px 10px', fontSize: '0.78rem', gap: 4 }}
+              >
+                <X size={13} /> ล้างการค้นหา
+              </button>
+            )}
 
-          {/* Reset Out-of-bounds Notes Helper Button */}
-          {outOfBoundsNotes.length > 0 && isFreeform && (
-            <button
-              type="button"
-              className="btn-secondary"
-              onClick={handleResetNotesToBounds}
-              style={{ padding: '4px 10px', fontSize: '0.78rem', gap: 6, borderRadius: 'var(--radius-full)' }}
-              title="ดึง Post-it ที่อยู่ไกลเกินขอบจอกลับมาในหน้าจอ"
-            >
-              <RefreshCw size={13} style={{ color: '#f59e0b' }} />
-              <span>ดึง Post-it ที่หลุดขอบกลับมา ({outOfBoundsNotes.length})</span>
-            </button>
-          )}
+            {/* Reset Out-of-bounds Notes Helper Button */}
+            {outOfBoundsNotes.length > 0 && isFreeform && (
+              <button
+                type="button"
+                className="btn-secondary"
+                onClick={handleResetNotesToBounds}
+                style={{ padding: '4px 10px', fontSize: '0.78rem', gap: 6, borderRadius: 'var(--radius-full)' }}
+                title="ดึง Post-it ที่อยู่ไกลเกินขอบจอกลับมาในหน้าจอ"
+              >
+                <RefreshCw size={13} style={{ color: '#f59e0b' }} />
+                <span>ดึง Post-it ที่หลุดขอบกลับมา ({outOfBoundsNotes.length})</span>
+              </button>
+            )}
 
-          {isFreeform && (
-            <span className="desktop-only-hint" style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 4 }}>
-              <Sparkles size={14} style={{ color: '#f59e0b' }} /> ดับเบิ้ลคลิกบนพื้นที่ว่างเพื่อวาง Post-it ใหม่ได้ทันที
-            </span>
-          )}
+            {isFreeform && (
+              <span className="desktop-only-hint" style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                <Sparkles size={14} style={{ color: '#f59e0b' }} /> ดับเบิ้ลคลิกบนพื้นที่ว่างเพื่อวาง Post-it ใหม่ได้ทันที
+              </span>
+            )}
+          </div>
         </div>
       </div>
 
       {/* Main Board Container */}
       <div
-        className={`whiteboard-board-area ${!isFreeform ? 'grid-container' : ''}`}
-        style={{
-          minWidth: isFreeform ? `${maxNoteX}px` : '100%',
-          minHeight: isFreeform ? `${maxNoteY}px` : 'calc(100vh - 140px)',
-          position: 'relative',
-          paddingBottom: 200,
-          paddingRight: isFreeform ? 200 : 0,
-        }}
+        className={`whiteboard-board-area ${isEmptyDisplay ? 'empty-board-area' : (!isFreeform ? 'grid-container' : '')}`}
+        style={
+          isEmptyDisplay
+            ? {
+                width: '100%',
+                minWidth: '100%',
+                boxSizing: 'border-box',
+              }
+            : {
+                minWidth: isFreeform ? `${maxNoteX}px` : '100%',
+                minHeight: isFreeform ? `${maxNoteY}px` : 'calc(100vh - 140px)',
+                position: 'relative',
+                paddingBottom: 200,
+                paddingRight: isFreeform ? 200 : 0,
+              }
+        }
       >
         {notes.length === 0 ? (
           <div className="empty-state">
