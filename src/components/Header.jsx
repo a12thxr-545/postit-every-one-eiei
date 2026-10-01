@@ -1,5 +1,5 @@
 import React from 'react';
-import { StickyNote, LayoutGrid, Plus, User, Moon, Sun, Grid, Move, Share2, Lock, ChevronDown, Home } from 'lucide-react';
+import { LayoutGrid, Plus, User, Moon, Sun, Grid, Move, Share2, Lock, ChevronDown, Home } from 'lucide-react';
 
 export default function Header({
   activeRoom,
@@ -30,9 +30,6 @@ export default function Header({
           <Home size={20} />
         </button>
 
-        <div className="brand-logo" onClick={onGoHome} style={{ cursor: 'pointer' }}>
-          <StickyNote size={22} />
-        </div>
         <div onClick={onGoHome} style={{ cursor: 'pointer' }}>
           <div className="brand-title">
             Minimal Board
