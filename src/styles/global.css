@@ -729,27 +729,30 @@ body {
   position: absolute;
   inset: 0;
   border-radius: 6px;
-  box-shadow: 0 16px 36px -8px rgba(113, 63, 18, 0.18), 0 6px 12px -3px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 16px 36px -8px rgba(0, 0, 0, 0.12), 0 6px 12px -3px rgba(0, 0, 0, 0.05);
   transition: all 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  /* Solid single color shade as requested */
+}
+
+/* Layer 3 - Bottom (Sage Mint Green) */
+.postit-stack-layer.layer-bottom {
+  background-color: #dcfce7;
+  border-bottom: 3px solid #bbf7d0;
+  transform: rotate(-6deg) translate(-12px, 14px);
+  opacity: 0.9;
+}
+
+/* Layer 2 - Middle (Ice Sky Blue) */
+.postit-stack-layer.layer-middle {
+  background-color: #e0f2fe;
+  border-bottom: 3px solid #bae6fd;
+  transform: rotate(5deg) translate(10px, 6px);
+  opacity: 0.95;
+}
+
+/* Layer 1 - Top Post-it (Soft Canary Yellow) */
+.postit-stack-layer.layer-top {
   background-color: #fef08a;
   border-bottom: 3px solid #fde68a;
-}
-
-/* Layer 3 - Bottom */
-.postit-stack-layer.layer-bottom {
-  transform: rotate(-6deg) translate(-12px, 14px);
-  opacity: 0.7;
-}
-
-/* Layer 2 - Middle */
-.postit-stack-layer.layer-middle {
-  transform: rotate(5deg) translate(10px, 6px);
-  opacity: 0.85;
-}
-
-/* Layer 1 - Top Post-it */
-.postit-stack-layer.layer-top {
   transform: rotate(-1deg) translate(0, 0);
   padding: 28px 24px 20px 24px;
   display: flex;
@@ -760,13 +763,13 @@ body {
 
 /* Hover Deck Fan Out Effect */
 .postit-stack-container:hover .layer-bottom {
-  transform: rotate(-10deg) translate(-22px, 20px) scale(1.02);
-  opacity: 0.85;
+  transform: rotate(-12deg) translate(-24px, 22px) scale(1.02);
+  opacity: 1;
 }
 
 .postit-stack-container:hover .layer-middle {
-  transform: rotate(8deg) translate(18px, 10px) scale(1.03);
-  opacity: 0.95;
+  transform: rotate(9deg) translate(20px, 12px) scale(1.03);
+  opacity: 1;
 }
 
 .postit-stack-container:hover .layer-top {
