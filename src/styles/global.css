@@ -836,15 +836,63 @@ body {
     width: 100%;
   }
 
+  /* Responsive Post-it Card on Mobile (Compact & Fits Viewport) */
   .postit-card {
-    max-width: calc(100vw - 32px);
-    width: 250px;
+    width: min(215px, calc(100vw - 24px)) !important;
+    min-height: 185px !important;
+    padding: 14px 12px 10px 12px !important;
+  }
+
+  .postit-tape {
+    width: 50px;
+    height: 18px;
+    top: -9px;
+  }
+
+  .font-sans {
+    font-size: 0.85rem;
+  }
+
+  .font-handwriting {
+    font-size: 1.2rem;
+  }
+
+  .font-mono {
+    font-size: 0.78rem;
+  }
+
+  .postit-body {
+    max-height: 110px;
+  }
+
+  .postit-header {
+    margin-bottom: 6px;
+    padding-bottom: 4px;
+  }
+
+  .postit-author {
+    font-size: 0.72rem;
+  }
+
+  .postit-author-avatar {
+    width: 17px;
+    height: 17px;
+    font-size: 0.6rem;
+  }
+
+  .postit-time {
+    font-size: 0.65rem;
+  }
+
+  .postit-like-btn {
+    padding: 2px 6px;
+    font-size: 0.7rem;
   }
 
   .grid-container {
     padding: 16px 12px;
-    grid-template-columns: 1fr;
-    gap: 16px;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 14px;
   }
 
   .modal-overlay {
@@ -859,11 +907,11 @@ body {
 
   .postit-stack-container {
     width: calc(100vw - 36px);
-    height: 250px;
+    height: 240px;
   }
 
   .postit-stack-layer.layer-top {
-    padding: 20px 16px;
+    padding: 18px 14px;
   }
 }
 
@@ -873,9 +921,23 @@ body {
     padding: 12px 18px;
   }
 
+  .postit-card {
+    width: 240px;
+    min-height: 210px;
+    padding: 16px 14px 12px 14px;
+  }
+
+  .font-sans {
+    font-size: 0.9rem;
+  }
+
+  .font-handwriting {
+    font-size: 1.35rem;
+  }
+
   .grid-container {
     padding: 24px 18px;
-    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
     gap: 18px;
   }
 

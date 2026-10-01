@@ -109,7 +109,8 @@ export default function PostItNote({
       const scrollLeft = canvas ? canvas.scrollLeft : 0;
       const scrollTop = canvas ? canvas.scrollTop : 0;
 
-      const maxAllowedX = Math.max(10, (window.innerWidth || 360) - 280);
+      const noteWidth = noteRef.current ? noteRef.current.offsetWidth : (window.innerWidth <= 640 ? 215 : 270);
+      const maxAllowedX = Math.max(10, (window.innerWidth || 360) - noteWidth - 12);
       const newX = Math.min(maxAllowedX, Math.max(10, e.clientX - canvasRect.left + scrollLeft - dragOffset.x));
       const newY = Math.max(10, e.clientY - canvasRect.top + scrollTop - dragOffset.y);
 
@@ -125,7 +126,8 @@ export default function PostItNote({
         const scrollLeft = canvas ? canvas.scrollLeft : 0;
         const scrollTop = canvas ? canvas.scrollTop : 0;
 
-        const maxAllowedX = Math.max(10, (window.innerWidth || 360) - 280);
+        const noteWidth = noteRef.current ? noteRef.current.offsetWidth : (window.innerWidth <= 640 ? 215 : 270);
+        const maxAllowedX = Math.max(10, (window.innerWidth || 360) - noteWidth - 12);
         const newX = Math.min(maxAllowedX, Math.max(10, touch.clientX - canvasRect.left + scrollLeft - dragOffset.x));
         const newY = Math.max(10, touch.clientY - canvasRect.top + scrollTop - dragOffset.y);
 
