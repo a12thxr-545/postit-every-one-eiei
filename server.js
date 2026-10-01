@@ -4,6 +4,7 @@ import cors from 'cors';
 import { createServer } from 'http';
 import { WebSocketServer, WebSocket } from 'ws';
 import Database from 'better-sqlite3';
+import { createClient } from '@supabase/supabase-js';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -22,7 +23,18 @@ app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
-// Initialize SQLite Database
+// Initialize Supabase Client if configured
+const supabaseUrl = process.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY;
+const isSupabaseConfigured =
+  supabaseUrl &&
+  supabaseAnonKey &&
+  supabaseUrl !== 'https://your-project.supabase.co' &&
+  !supabaseUrl.includes('your-project');
+
+const supabase = isSupabaseConfigured ? createClient(supabaseUrl, supabaseAnonKey) : null;
+
+// Initialize Local SQLite Database
 const db = new Database(path.join(__dirname, 'postit.db'));
 
 // Create Tables
@@ -69,8 +81,21 @@ function broadcast(message, senderWs = null) {
 // API Routes
 
 // Get all rooms
-app.get('/api/rooms', (req, res) => {
+app.get('/api/rooms', async (req, res) => {
   try {
+    if (isSupabaseConfigured) {
+      const { data, error } = await supabase.from('rooms').select('id, name, created_at, password, notes(id)');
+      if (error) throw error;
+      const rooms = (data || []).map((r) => ({
+        id: r.id,
+        name: r.name,
+        created_at: r.created_at,
+        is_protected: r.password && r.password !== '' ? 1 : 0,
+        note_count: r.notes ? r.notes.length : 0,
+      }));
+      return res.json({ success: true, rooms });
+    }
+
     const rooms = db.prepare(`
       SELECT r.id, r.name, r.created_at, 
              CASE WHEN r.password IS NOT NULL AND r.password != '' THEN 1 ELSE 0 END as is_protected,
@@ -87,17 +112,23 @@ app.get('/api/rooms', (req, res) => {
 });
 
 // Verify Room Password
-app.post('/api/rooms/:roomId/verify', (req, res) => {
+app.post('/api/rooms/:roomId/verify', async (req, res) => {
   try {
     const { roomId } = req.params;
     const { password } = req.body;
-    const room = db.prepare('SELECT password FROM rooms WHERE id = ?').get(roomId);
 
-    if (!room) {
-      return res.status(404).json({ success: false, error: 'ไม่พบกระดานนี้' });
+    let roomPassword = null;
+    if (isSupabaseConfigured) {
+      const { data, error } = await supabase.from('rooms').select('password').eq('id', roomId).single();
+      if (error) return res.status(404).json({ success: false, error: 'ไม่พบกระดานนี้' });
+      roomPassword = data ? data.password : null;
+    } else {
+      const room = db.prepare('SELECT password FROM rooms WHERE id = ?').get(roomId);
+      if (!room) return res.status(404).json({ success: false, error: 'ไม่พบกระดานนี้' });
+      roomPassword = room.password;
     }
 
-    if (!room.password || room.password === '' || room.password === password) {
+    if (!roomPassword || roomPassword === '' || roomPassword === password) {
       return res.json({ success: true, verified: true });
     } else {
       return res.status(401).json({ success: false, verified: false, error: 'รหัสผ่านเข้ากระดานไม่ถูกต้อง' });
@@ -108,34 +139,43 @@ app.post('/api/rooms/:roomId/verify', (req, res) => {
 });
 
 // Create new room (with optional password)
-app.post('/api/rooms', (req, res) => {
+app.post('/api/rooms', async (req, res) => {
   try {
     const { id, name, password } = req.body;
     if (!name || !name.trim()) {
       return res.status(400).json({ success: false, error: 'กรุณาระบุชื่อห้อง (Room name required)' });
     }
     const cleanId = (id || name).toLowerCase().replace(/[^a-z0-9_-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '') || `room-${Date.now()}`;
+    const roomPassword = password && password.trim() ? password.trim() : null;
 
-    // Check if exists
+    if (isSupabaseConfigured) {
+      const { data: existing } = await supabase.from('rooms').select('id').eq('id', cleanId).single();
+      if (existing) {
+        return res.status(400).json({ success: false, error: 'มีห้องชื่อนี้หรือรหัสนี้อยู่แล้ว (Room ID already exists)' });
+      }
+
+      const { data, error } = await supabase
+        .from('rooms')
+        .insert([{ id: cleanId, name: name.trim(), password: roomPassword }])
+        .select()
+        .single();
+      if (error) throw error;
+
+      const newRoom = { id: cleanId, name: name.trim(), is_protected: roomPassword ? 1 : 0, note_count: 0, created_at: data.created_at };
+      broadcast({ type: 'ROOM_CREATED', room: newRoom });
+      return res.json({ success: true, room: newRoom });
+    }
+
     const existing = db.prepare('SELECT id FROM rooms WHERE id = ?').get(cleanId);
     if (existing) {
       return res.status(400).json({ success: false, error: 'มีห้องชื่อนี้หรือรหัสนี้อยู่แล้ว (Room ID already exists)' });
     }
 
-    const roomPassword = password && password.trim() ? password.trim() : null;
-
     const stmt = db.prepare('INSERT INTO rooms (id, name, password) VALUES (?, ?, ?)');
     stmt.run(cleanId, name.trim(), roomPassword);
 
-    const newRoom = {
-      id: cleanId,
-      name: name.trim(),
-      is_protected: roomPassword ? 1 : 0,
-      note_count: 0,
-      created_at: new Date().toISOString()
-    };
+    const newRoom = { id: cleanId, name: name.trim(), is_protected: roomPassword ? 1 : 0, note_count: 0, created_at: new Date().toISOString() };
     broadcast({ type: 'ROOM_CREATED', room: newRoom });
-
     res.json({ success: true, room: newRoom });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
@@ -143,12 +183,30 @@ app.post('/api/rooms', (req, res) => {
 });
 
 // Get notes for a room
-app.get('/api/rooms/:roomId/notes', (req, res) => {
+app.get('/api/rooms/:roomId/notes', async (req, res) => {
   try {
     const { roomId } = req.params;
-    const room = db.prepare('SELECT password FROM rooms WHERE id = ?').get(roomId);
 
-    // Check password protection
+    if (isSupabaseConfigured) {
+      const { data: room } = await supabase.from('rooms').select('password').eq('id', roomId).single();
+      if (room && room.password && room.password !== '') {
+        const providedPassword = req.headers['x-room-password'] || req.query.password;
+        if (providedPassword !== room.password) {
+          return res.status(401).json({ success: false, is_protected: true, error: 'ต้องใช้รหัสผ่านในการเข้ากระดานนี้' });
+        }
+      }
+
+      const { data: notes, error } = await supabase
+        .from('notes')
+        .select('*')
+        .eq('room_id', roomId)
+        .order('z_index', { ascending: true })
+        .order('created_at', { ascending: true });
+      if (error) throw error;
+      return res.json({ success: true, notes: notes || [] });
+    }
+
+    const room = db.prepare('SELECT password FROM rooms WHERE id = ?').get(roomId);
     if (room && room.password && room.password !== '') {
       const providedPassword = req.headers['x-room-password'] || req.query.password;
       if (providedPassword !== room.password) {
@@ -163,8 +221,8 @@ app.get('/api/rooms/:roomId/notes', (req, res) => {
   }
 });
 
-// Create a new note (supporting image_url)
-app.post('/api/rooms/:roomId/notes', (req, res) => {
+// Create a new note
+app.post('/api/rooms/:roomId/notes', async (req, res) => {
   try {
     const { roomId } = req.params;
     const { author_name, content, image_url, color, font_style, x_pos, y_pos } = req.body;
@@ -176,16 +234,30 @@ app.post('/api/rooms/:roomId/notes', (req, res) => {
       return res.status(400).json({ success: false, error: 'กรุณาใส่ข้อความหรือแนบรูปภาพบน Post-it' });
     }
 
-    // Get max z-index
-    const maxZ = db.prepare('SELECT MAX(z_index) as maxZ FROM notes WHERE room_id = ?').get(roomId);
-    const z_index = (maxZ && maxZ.maxZ ? maxZ.maxZ : 0) + 1;
-
     const noteId = `note-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
     const noteColor = color || 'yellow';
     const font = font_style || 'sans';
     const x = typeof x_pos === 'number' ? x_pos : Math.floor(Math.random() * 300) + 100;
     const y = typeof y_pos === 'number' ? y_pos : Math.floor(Math.random() * 200) + 100;
     const image = image_url || null;
+
+    if (isSupabaseConfigured) {
+      const { data: maxZData } = await supabase.from('notes').select('z_index').eq('room_id', roomId).order('z_index', { ascending: false }).limit(1);
+      const z_index = (maxZData && maxZData[0] ? maxZData[0].z_index : 0) + 1;
+
+      const { data: newNote, error } = await supabase
+        .from('notes')
+        .insert([{ id: noteId, room_id: roomId, author_name: author_name.trim(), content: (content || '').trim(), image_url: image, color: noteColor, font_style: font, x_pos: x, y_pos: y, z_index }])
+        .select()
+        .single();
+      if (error) throw error;
+
+      broadcast({ type: 'NOTE_CREATED', note: newNote });
+      return res.json({ success: true, note: newNote });
+    }
+
+    const maxZ = db.prepare('SELECT MAX(z_index) as maxZ FROM notes WHERE room_id = ?').get(roomId);
+    const z_index = (maxZ && maxZ.maxZ ? maxZ.maxZ : 0) + 1;
 
     const stmt = db.prepare(`
       INSERT INTO notes (id, room_id, author_name, content, image_url, color, font_style, x_pos, y_pos, z_index)
@@ -195,7 +267,6 @@ app.post('/api/rooms/:roomId/notes', (req, res) => {
 
     const newNote = db.prepare('SELECT * FROM notes WHERE id = ?').get(noteId);
     broadcast({ type: 'NOTE_CREATED', note: newNote });
-
     res.json({ success: true, note: newNote });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
@@ -203,15 +274,31 @@ app.post('/api/rooms/:roomId/notes', (req, res) => {
 });
 
 // Update a note
-app.put('/api/notes/:id', (req, res) => {
+app.put('/api/notes/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const { content, image_url, color, font_style, x_pos, y_pos, z_index, pinned } = req.body;
 
-    const existing = db.prepare('SELECT * FROM notes WHERE id = ?').get(id);
-    if (!existing) {
-      return res.status(404).json({ success: false, error: 'ไม่พบ Post-it นี้ (Note not found)' });
+    if (isSupabaseConfigured) {
+      const updates = {};
+      if (content !== undefined) updates.content = content.trim();
+      if (image_url !== undefined) updates.image_url = image_url;
+      if (color !== undefined) updates.color = color;
+      if (font_style !== undefined) updates.font_style = font_style;
+      if (x_pos !== undefined) updates.x_pos = x_pos;
+      if (y_pos !== undefined) updates.y_pos = y_pos;
+      if (z_index !== undefined) updates.z_index = z_index;
+      if (pinned !== undefined) updates.pinned = pinned ? 1 : 0;
+
+      const { data: updatedNote, error } = await supabase.from('notes').update(updates).eq('id', id).select().single();
+      if (error) throw error;
+
+      broadcast({ type: 'NOTE_UPDATED', note: updatedNote });
+      return res.json({ success: true, note: updatedNote });
     }
+
+    const existing = db.prepare('SELECT * FROM notes WHERE id = ?').get(id);
+    if (!existing) return res.status(404).json({ success: false, error: 'ไม่พบ Post-it นี้' });
 
     const updatedContent = content !== undefined ? content.trim() : existing.content;
     const updatedImage = image_url !== undefined ? image_url : existing.image_url;
@@ -231,23 +318,32 @@ app.put('/api/notes/:id', (req, res) => {
 
     const updatedNote = db.prepare('SELECT * FROM notes WHERE id = ?').get(id);
     broadcast({ type: 'NOTE_UPDATED', note: updatedNote });
-
     res.json({ success: true, note: updatedNote });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
 });
 
-// Toggle Like / Unlike a note
-app.post('/api/notes/:id/toggle-like', (req, res) => {
+// Toggle Like / Unlike
+app.post('/api/notes/:id/toggle-like', async (req, res) => {
   try {
     const { id } = req.params;
-    const { liked } = req.body; // boolean: true = add like, false = remove like
+    const { liked } = req.body;
+
+    if (isSupabaseConfigured) {
+      const { data: note } = await supabase.from('notes').select('likes').eq('id', id).single();
+      if (!note) return res.status(404).json({ success: false, error: 'ไม่พบ Note' });
+
+      const newLikes = liked ? (note.likes || 0) + 1 : Math.max(0, (note.likes || 1) - 1);
+      const { data: updatedNote, error } = await supabase.from('notes').update({ likes: newLikes }).eq('id', id).select().single();
+      if (error) throw error;
+
+      broadcast({ type: 'NOTE_UPDATED', note: updatedNote });
+      return res.json({ success: true, note: updatedNote });
+    }
 
     const note = db.prepare('SELECT likes FROM notes WHERE id = ?').get(id);
-    if (!note) {
-      return res.status(404).json({ success: false, error: 'ไม่พบ Note' });
-    }
+    if (!note) return res.status(404).json({ success: false, error: 'ไม่พบ Note' });
 
     const newLikes = liked ? note.likes + 1 : Math.max(0, note.likes - 1);
     db.prepare('UPDATE notes SET likes = ? WHERE id = ?').run(newLikes, id);
@@ -263,13 +359,23 @@ app.post('/api/notes/:id/toggle-like', (req, res) => {
 });
 
 // Delete a note
-app.delete('/api/notes/:id', (req, res) => {
+app.delete('/api/notes/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const note = db.prepare('SELECT * FROM notes WHERE id = ?').get(id);
-    if (!note) {
-      return res.status(404).json({ success: false, error: 'ไม่พบ Post-it นี้ (Note not found)' });
+
+    if (isSupabaseConfigured) {
+      const { data: note } = await supabase.from('notes').select('room_id').eq('id', id).single();
+      const roomId = note ? note.room_id : null;
+
+      const { error } = await supabase.from('notes').delete().eq('id', id);
+      if (error) throw error;
+
+      broadcast({ type: 'NOTE_DELETED', noteId: id, roomId });
+      return res.json({ success: true, noteId: id });
     }
+
+    const note = db.prepare('SELECT * FROM notes WHERE id = ?').get(id);
+    if (!note) return res.status(404).json({ success: false, error: 'ไม่พบ Post-it นี้' });
 
     db.prepare('DELETE FROM notes WHERE id = ?').run(id);
     broadcast({ type: 'NOTE_DELETED', noteId: id, roomId: note.room_id });
