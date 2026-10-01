@@ -667,6 +667,15 @@ mark.search-highlight {
   margin: 0 auto;
 }
 
+.filter-info-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  flex-wrap: wrap;
+}
+
 .search-box {
   display: flex;
   align-items: center;
@@ -901,16 +910,23 @@ mark.search-highlight {
   }
 
   .filter-bar {
-    padding: 8px 12px;
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
+    padding: 10px 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
     gap: 8px;
   }
 
   .search-box {
-    flex: 1;
-    width: auto;
+    width: 100% !important;
+  }
+
+  .filter-info-group {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    gap: 8px;
   }
 
   .desktop-only-hint {

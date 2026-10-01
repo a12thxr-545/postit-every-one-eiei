@@ -99,7 +99,7 @@ export default function Whiteboard({
           )}
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: '0.85rem', color: 'var(--text-secondary)', flexWrap: 'wrap' }}>
+        <div className="filter-info-group">
           <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontWeight: 600 }}>
             <Pin size={14} style={{ color: 'var(--accent-color)' }} />
             {searchTerm ? `พบ ${filteredNotes.length} จาก ${notes.length} แผ่น` : `ทั้งหมด ${notes.length} แผ่น`}
