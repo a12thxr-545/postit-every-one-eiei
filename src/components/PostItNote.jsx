@@ -81,7 +81,13 @@ export default function PostItNote({
     }
   };
 
-  // Handle Mouse / Touch Dragging
+  const currentPosRef = useRef({ x: note.x_pos || 0, y: note.y_pos || 0 });
+  const pointerRef = useRef({ clientX: 0, clientY: 0 });
+
+  useEffect(() => {
+    currentPosRef.current = { x: note.x_pos || 0, y: note.y_pos || 0 };
+  }, [note.x_pos, note.y_pos]);
+
   const handleMouseDown = (e) => {
     if (!isFreeform) return;
     if (e.target.closest('button') || e.target.closest('textarea') || e.target.closest('.no-drag')) {
@@ -92,6 +98,7 @@ export default function PostItNote({
     setIsDragging(true);
 
     const rect = noteRef.current.getBoundingClientRect();
+    pointerRef.current = { clientX: e.clientX, clientY: e.clientY };
     setDragOffset({
       x: e.clientX - rect.left,
       y: e.clientY - rect.top,
@@ -109,6 +116,7 @@ export default function PostItNote({
     const rect = noteRef.current.getBoundingClientRect();
     
     setIsDragging(true);
+    pointerRef.current = { clientX: touch.clientX, clientY: touch.clientY };
     setDragOffset({
       x: touch.clientX - rect.left,
       y: touch.clientY - rect.top,
@@ -118,56 +126,93 @@ export default function PostItNote({
   useEffect(() => {
     if (!isDragging) return;
 
-    const handleMouseMove = (e) => {
-      if (!isDragging) return;
+    let animId = null;
+
+    const updatePositionAndAutoScroll = () => {
       const canvas = document.querySelector('.whiteboard-canvas');
-      const canvasRect = canvas ? canvas.getBoundingClientRect() : { left: 0, top: 0 };
-      const scrollLeft = canvas ? canvas.scrollLeft : 0;
-      const scrollTop = canvas ? canvas.scrollTop : 0;
+      if (canvas) {
+        const canvasRect = canvas.getBoundingClientRect();
+        const { clientX, clientY } = pointerRef.current;
+        const EDGE_MARGIN = 55;
+        const MAX_SPEED = 14;
 
-      const newX = Math.max(0, Math.round(e.clientX - canvasRect.left + scrollLeft - dragOffset.x));
-      const newY = Math.max(0, Math.round(e.clientY - canvasRect.top + scrollTop - dragOffset.y));
+        let scrollDx = 0;
+        let scrollDy = 0;
 
-      onStartDrag(note.id, newX, newY);
+        // Check Right Edge
+        if (clientX > canvasRect.right - EDGE_MARGIN) {
+          const factor = Math.min(1, (clientX - (canvasRect.right - EDGE_MARGIN)) / EDGE_MARGIN);
+          scrollDx = Math.max(3, Math.round(factor * MAX_SPEED));
+        }
+        // Check Left Edge
+        else if (clientX < canvasRect.left + EDGE_MARGIN) {
+          const factor = Math.min(1, ((canvasRect.left + EDGE_MARGIN) - clientX) / EDGE_MARGIN);
+          scrollDx = -Math.max(3, Math.round(factor * MAX_SPEED));
+        }
+
+        // Check Bottom Edge
+        if (clientY > canvasRect.bottom - EDGE_MARGIN) {
+          const factor = Math.min(1, (clientY - (canvasRect.bottom - EDGE_MARGIN)) / EDGE_MARGIN);
+          scrollDy = Math.max(3, Math.round(factor * MAX_SPEED));
+        }
+        // Check Top Edge
+        else if (clientY < canvasRect.top + EDGE_MARGIN) {
+          const factor = Math.min(1, ((canvasRect.top + EDGE_MARGIN) - clientY) / EDGE_MARGIN);
+          scrollDy = -Math.max(3, Math.round(factor * MAX_SPEED));
+        }
+
+        if (scrollDx !== 0 || scrollDy !== 0) {
+          canvas.scrollLeft += scrollDx;
+          canvas.scrollTop += scrollDy;
+        }
+
+        const scrollLeft = canvas.scrollLeft;
+        const scrollTop = canvas.scrollTop;
+        const newX = Math.max(0, Math.round(clientX - canvasRect.left + scrollLeft - dragOffset.x));
+        const newY = Math.max(0, Math.round(clientY - canvasRect.top + scrollTop - dragOffset.y));
+
+        currentPosRef.current = { x: newX, y: newY };
+        onStartDrag(note.id, newX, newY);
+      }
+
+      animId = requestAnimationFrame(updatePositionAndAutoScroll);
+    };
+
+    const handleMouseMove = (e) => {
+      pointerRef.current = { clientX: e.clientX, clientY: e.clientY };
     };
 
     const handleTouchMove = (e) => {
-      if (!isDragging) return;
       if (e.touches && e.touches.length > 0) {
-        const touch = e.touches[0];
-        const canvas = document.querySelector('.whiteboard-canvas');
-        const canvasRect = canvas ? canvas.getBoundingClientRect() : { left: 0, top: 0 };
-        const scrollLeft = canvas ? canvas.scrollLeft : 0;
-        const scrollTop = canvas ? canvas.scrollTop : 0;
-
-        const newX = Math.max(0, Math.round(touch.clientX - canvasRect.left + scrollLeft - dragOffset.x));
-        const newY = Math.max(0, Math.round(touch.clientY - canvasRect.top + scrollTop - dragOffset.y));
-
-        onStartDrag(note.id, newX, newY);
+        if (e.cancelable) e.preventDefault();
+        pointerRef.current = { clientX: e.touches[0].clientX, clientY: e.touches[0].clientY };
       }
     };
 
     const handleDragEnd = () => {
       if (isDragging) {
         setIsDragging(false);
-        onUpdate(note.id, { x_pos: note.x_pos, y_pos: note.y_pos });
+        onUpdate(note.id, { x_pos: currentPosRef.current.x, y_pos: currentPosRef.current.y });
       }
     };
 
+    animId = requestAnimationFrame(updatePositionAndAutoScroll);
+
     window.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('mouseup', handleDragEnd);
-    window.addEventListener('touchmove', handleTouchMove, { passive: true });
+    window.addEventListener('touchmove', handleTouchMove, { passive: false });
     window.addEventListener('touchend', handleDragEnd);
     window.addEventListener('touchcancel', handleDragEnd);
 
     return () => {
+      if (animId) cancelAnimationFrame(animId);
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleDragEnd);
       window.removeEventListener('touchmove', handleTouchMove);
       window.removeEventListener('touchend', handleDragEnd);
       window.removeEventListener('touchcancel', handleDragEnd);
     };
-  }, [isDragging, dragOffset, note.id, note.x_pos, note.y_pos, onStartDrag, onUpdate]);
+  }, [isDragging, dragOffset, note.id, onStartDrag, onUpdate]);
 
   const formattedTime = new Date(note.created_at || Date.now()).toLocaleTimeString('th-TH', {
     hour: '2-digit',
@@ -192,8 +237,9 @@ export default function PostItNote({
           ? {
               left: `${Math.max(0, note.x_pos || 0)}px`,
               top: `${Math.max(0, note.y_pos || 0)}px`,
-              zIndex: isSearchMatched ? 990 : note.z_index || 1,
+              zIndex: isDragging ? 9999 : isSearchMatched ? 990 : note.z_index || 1,
               transform: isDragging ? 'scale(1.04) rotate(0deg)' : `rotate(${rotation.current}deg)`,
+              touchAction: 'none',
             }
           : {
               transform: `rotate(${rotation.current}deg)`,
