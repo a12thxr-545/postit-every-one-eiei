@@ -10,6 +10,8 @@ import RoomListModal from './components/RoomListModal';
 import NoteModal from './components/NoteModal';
 import PasswordModal from './components/PasswordModal';
 
+import ViewNoteModal from './components/ViewNoteModal';
+
 export default function App() {
   // View Router State ('home' | 'board')
   const [viewMode, setViewMode] = useState(() => {
@@ -35,6 +37,7 @@ export default function App() {
   const [showRoomListModal, setShowRoomListModal] = useState(false);
   const [showNoteModal, setShowNoteModal] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [selectedViewNote, setSelectedViewNote] = useState(null);
   const [pendingRoomId, setPendingRoomId] = useState(null);
 
   const [presetNotePos, setPresetNotePos] = useState(null);
@@ -410,11 +413,23 @@ export default function App() {
               setPresetNotePos(null);
               setShowNoteModal(true);
             }}
+            onViewNote={(note) => setSelectedViewNote(note)}
           />
         </>
       )}
 
       {/* Modals */}
+      {selectedViewNote && (
+        <ViewNoteModal
+          note={notes.find((n) => n.id === selectedViewNote.id) || selectedViewNote}
+          currentUserName={userName}
+          onUpdateNote={handleUpdateNote}
+          onDeleteNote={handleDeleteNote}
+          onToggleLikeNote={handleToggleLikeNote}
+          onClose={() => setSelectedViewNote(null)}
+        />
+      )}
+
       {showNameModal && (
         <NameModal
           currentName={userName}

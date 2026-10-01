@@ -14,6 +14,7 @@ export default function Whiteboard({
   onStartDragNote,
   onDoubleClickBoard,
   onOpenCreateNote,
+  onViewNote,
 }) {
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -111,6 +112,7 @@ export default function Whiteboard({
               onToggleLike={onToggleLikeNote}
               onBringToFront={onBringToFront}
               onStartDrag={onStartDragNote}
+              onViewNote={onViewNote}
             />
           ))
         )}

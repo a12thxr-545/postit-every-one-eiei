@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Heart, Trash2, Palette, X } from 'lucide-react';
+import { Heart, Trash2, Palette, X, Maximize2 } from 'lucide-react';
 
 const COLORS = ['yellow', 'peach', 'green', 'blue', 'purple', 'pink', 'white'];
 
@@ -21,11 +21,12 @@ export default function PostItNote({
   onBringToFront,
   isFreeform,
   onStartDrag,
+  onViewNote,
 }) {
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [showColorPicker, setShowColorPicker] = useState(false);
-  
+
   // Track liked state from localStorage
   const [isLiked, setIsLiked] = useState(() => {
     try {
@@ -202,7 +203,15 @@ export default function PostItNote({
 
       {/* Optional Attached Image */}
       {note.image_url && (
-        <div style={{ marginBottom: 8, borderRadius: 4, overflow: 'hidden' }}>
+        <div
+          style={{ marginBottom: 8, borderRadius: 4, overflow: 'hidden', cursor: 'pointer' }}
+          className="no-drag"
+          onClick={(e) => {
+            e.stopPropagation();
+            if (onViewNote) onViewNote(note);
+          }}
+          title="คลิกเพื่อขยายดู Post-it แบบขยายใหญ่"
+        >
           <img
             src={note.image_url}
             alt="Attached"
@@ -218,7 +227,15 @@ export default function PostItNote({
       )}
 
       {/* Note Body Text */}
-      <div className="postit-body">
+      <div
+        className="postit-body"
+        onClick={(e) => {
+          // If in grid mode or user single clicks text area
+          if (!isFreeform && onViewNote) {
+            onViewNote(note);
+          }
+        }}
+      >
         {note.content}
       </div>
 
@@ -239,6 +256,21 @@ export default function PostItNote({
         </button>
 
         <div className="postit-tools no-drag">
+          {/* Maximize / Expand View Button */}
+          {onViewNote && (
+            <button
+              type="button"
+              className="postit-tool-btn"
+              title="ดูแบบขยายใหญ่"
+              onClick={(e) => {
+                e.stopPropagation();
+                onViewNote(note);
+              }}
+            >
+              <Maximize2 size={14} />
+            </button>
+          )}
+
           {/* Color Switcher */}
           <div style={{ position: 'relative' }}>
             <button
