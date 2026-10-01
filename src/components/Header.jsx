@@ -1,5 +1,5 @@
 import React from 'react';
-import { StickyNote, LayoutGrid, Plus, User, Moon, Sun, Grid, Move, Share2, Lock, ChevronDown } from 'lucide-react';
+import { StickyNote, LayoutGrid, Plus, User, Moon, Sun, Grid, Move, Share2, Lock, ChevronDown, Home } from 'lucide-react';
 
 export default function Header({
   activeRoom,
@@ -13,15 +13,27 @@ export default function Header({
   onToggleTheme,
   onToggleLayout,
   onShareRoom,
+  onGoHome,
 }) {
   return (
     <header className="app-header">
       {/* Left Brand & Room Selector */}
       <div className="brand-section">
-        <div className="brand-logo">
+        {/* Home Button */}
+        <button
+          type="button"
+          className="btn-icon"
+          onClick={onGoHome}
+          title="กลับไปยังหน้าหลัก (Home)"
+          style={{ width: 38, height: 38 }}
+        >
+          <Home size={20} />
+        </button>
+
+        <div className="brand-logo" onClick={onGoHome} style={{ cursor: 'pointer' }}>
           <StickyNote size={22} />
         </div>
-        <div>
+        <div onClick={onGoHome} style={{ cursor: 'pointer' }}>
           <div className="brand-title">
             Minimal Board
             <span className="brand-badge">Whiteboard</span>

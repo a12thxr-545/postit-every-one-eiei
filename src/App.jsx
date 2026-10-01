@@ -3,6 +3,7 @@ import confetti from 'canvas-confetti';
 
 import Header from './components/Header';
 import Whiteboard from './components/Whiteboard';
+import HomePage from './components/HomePage';
 import NameModal from './components/NameModal';
 import RoomModal from './components/RoomModal';
 import RoomListModal from './components/RoomListModal';
@@ -10,6 +11,12 @@ import NoteModal from './components/NoteModal';
 import PasswordModal from './components/PasswordModal';
 
 export default function App() {
+  // View Router State ('home' | 'board')
+  const [viewMode, setViewMode] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.has('room') ? 'board' : 'home';
+  });
+
   // User Identity State
   const [userName, setUserName] = useState(() => localStorage.getItem('postit_username') || '');
   const [showNameModal, setShowNameModal] = useState(() => !localStorage.getItem('postit_username'));
@@ -90,7 +97,6 @@ export default function App() {
       const data = await res.json();
 
       if (res.status === 401 || (data.is_protected && !data.success)) {
-        // Room password required
         setPendingRoomId(roomId);
         setShowPasswordModal(true);
         return false;
@@ -124,9 +130,17 @@ export default function App() {
     const success = await fetchNotes(roomId);
     if (success !== false) {
       setActiveRoomId(roomId);
+      setViewMode('board');
       const newUrl = `${window.location.pathname}?room=${roomId}`;
       window.history.pushState({ path: newUrl }, '', newUrl);
     }
+  };
+
+  // Go Home Handler
+  const handleGoHome = () => {
+    setViewMode('home');
+    const newUrl = window.location.pathname;
+    window.history.pushState({ path: newUrl }, '', newUrl);
   };
 
   // Room Password Verification
@@ -144,6 +158,7 @@ export default function App() {
         sessionStorage.setItem(`room_pwd_${pendingRoomId}`, password);
         setShowPasswordModal(false);
         setActiveRoomId(pendingRoomId);
+        setViewMode('board');
         const newUrl = `${window.location.pathname}?room=${pendingRoomId}`;
         window.history.pushState({ path: newUrl }, '', newUrl);
         await fetchNotes(pendingRoomId, password);
@@ -162,10 +177,10 @@ export default function App() {
   }, [fetchRooms]);
 
   useEffect(() => {
-    if (activeRoomId) {
+    if (activeRoomId && viewMode === 'board') {
       fetchNotes(activeRoomId);
     }
-  }, [activeRoomId, fetchNotes]);
+  }, [activeRoomId, viewMode, fetchNotes]);
 
   // WebSocket Live Updates
   useEffect(() => {
@@ -294,7 +309,6 @@ export default function App() {
     }
   };
 
-  // Toggle Like / Unlike Note handler
   const handleToggleLikeNote = async (noteId, isLiked) => {
     setNotes((prev) =>
       prev.map((n) =>
@@ -340,41 +354,56 @@ export default function App() {
 
   return (
     <div className="app-container">
-      {/* Navigation Header */}
-      <Header
-        activeRoom={activeRoomObj}
-        userName={userName}
-        isDarkMode={isDarkMode}
-        isFreeform={isFreeform}
-        onOpenRoomList={() => setShowRoomListModal(true)}
-        onOpenCreateRoom={() => setShowRoomModal(true)}
-        onOpenCreateNote={() => {
-          setPresetNotePos(null);
-          setShowNoteModal(true);
-        }}
-        onOpenEditName={() => setShowNameModal(true)}
-        onToggleTheme={() => setIsDarkMode(!isDarkMode)}
-        onToggleLayout={() => setIsFreeform(!isFreeform)}
-        onShareRoom={handleShareRoom}
-      />
+      {viewMode === 'home' ? (
+        /* Home Landing Page */
+        <HomePage
+          rooms={rooms}
+          userName={userName}
+          onSelectRoom={changeRoom}
+          onOpenCreateRoom={() => setShowRoomModal(true)}
+          onOpenEditName={() => setShowNameModal(true)}
+          isDarkMode={isDarkMode}
+          onToggleTheme={() => setIsDarkMode(!isDarkMode)}
+        />
+      ) : (
+        /* Whiteboard Dashboard View */
+        <>
+          <Header
+            activeRoom={activeRoomObj}
+            userName={userName}
+            isDarkMode={isDarkMode}
+            isFreeform={isFreeform}
+            onOpenRoomList={() => setShowRoomListModal(true)}
+            onOpenCreateRoom={() => setShowRoomModal(true)}
+            onOpenCreateNote={() => {
+              setPresetNotePos(null);
+              setShowNoteModal(true);
+            }}
+            onOpenEditName={() => setShowNameModal(true)}
+            onToggleTheme={() => setIsDarkMode(!isDarkMode)}
+            onToggleLayout={() => setIsFreeform(!isFreeform)}
+            onShareRoom={handleShareRoom}
+            onGoHome={handleGoHome}
+          />
 
-      {/* Main Whiteboard Canvas */}
-      <Whiteboard
-        notes={notes}
-        activeRoom={activeRoomObj}
-        currentUserName={userName}
-        isFreeform={isFreeform}
-        onUpdateNote={handleUpdateNote}
-        onDeleteNote={handleDeleteNote}
-        onToggleLikeNote={handleToggleLikeNote}
-        onBringToFront={handleBringToFront}
-        onStartDragNote={handleStartDragNote}
-        onDoubleClickBoard={handleDoubleClickBoard}
-        onOpenCreateNote={() => {
-          setPresetNotePos(null);
-          setShowNoteModal(true);
-        }}
-      />
+          <Whiteboard
+            notes={notes}
+            activeRoom={activeRoomObj}
+            currentUserName={userName}
+            isFreeform={isFreeform}
+            onUpdateNote={handleUpdateNote}
+            onDeleteNote={handleDeleteNote}
+            onToggleLikeNote={handleToggleLikeNote}
+            onBringToFront={handleBringToFront}
+            onStartDragNote={handleStartDragNote}
+            onDoubleClickBoard={handleDoubleClickBoard}
+            onOpenCreateNote={() => {
+              setPresetNotePos(null);
+              setShowNoteModal(true);
+            }}
+          />
+        </>
+      )}
 
       {/* Modals */}
       {showNameModal && (
