@@ -11,10 +11,15 @@ import NoteModal from './components/NoteModal';
 import PasswordModal from './components/PasswordModal';
 
 import ViewNoteModal from './components/ViewNoteModal';
+import AdminPanel from './components/AdminPanel';
 
 export default function App() {
-  // View Router State ('home' | 'board')
+  // View Router State ('home' | 'board' | 'admin')
   const [viewMode, setViewMode] = useState(() => {
+    const pathname = window.location.pathname;
+    if (pathname.includes('/axthur545eiei')) {
+      return 'admin';
+    }
     const params = new URLSearchParams(window.location.search);
     return params.has('room') ? 'board' : 'home';
   });
@@ -366,7 +371,14 @@ export default function App() {
 
   return (
     <div className="app-container">
-      {viewMode === 'home' ? (
+      {viewMode === 'admin' ? (
+        /* Super Admin Control Panel (/axthur545eiei) */
+        <AdminPanel
+          onGoHome={handleGoHome}
+          onSelectRoom={(roomId) => changeRoom(roomId)}
+          addToast={addToast}
+        />
+      ) : viewMode === 'home' ? (
         /* Home Landing Page */
         <HomePage
           rooms={rooms}
