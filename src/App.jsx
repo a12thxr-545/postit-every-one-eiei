@@ -251,7 +251,12 @@ export default function App() {
     }
   };
 
+  const isCreatingNoteRef = useRef(false);
+
   const handleCreateNote = async (noteData) => {
+    if (isCreatingNoteRef.current) return;
+    isCreatingNoteRef.current = true;
+
     try {
       if (noteData.author_name) {
         setUserName(noteData.author_name);
@@ -280,7 +285,10 @@ export default function App() {
       const data = await res.json();
 
       if (data.success) {
-        setNotes((prev) => [...prev, data.note]);
+        setNotes((prev) => {
+          if (prev.some((n) => n.id === data.note.id)) return prev;
+          return [...prev, data.note];
+        });
         setShowNoteModal(false);
         setPresetNotePos(null);
         confetti({ particleCount: 40, spread: 50, origin: { y: 0.7 } });
@@ -290,6 +298,8 @@ export default function App() {
       }
     } catch (err) {
       console.error(err);
+    } finally {
+      isCreatingNoteRef.current = false;
     }
   };
 

@@ -219,19 +219,21 @@ export default function PostItNote({
     minute: '2-digit',
   });
 
-  const isSearchMatched = Boolean(
-    searchTerm &&
-      searchTerm.trim() &&
-      ((note.content && note.content.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        (note.author_name && note.author_name.toLowerCase().includes(searchTerm.toLowerCase())))
-  );
+  const hasSearchTerm = Boolean(searchTerm && searchTerm.trim());
+  const isSearchMatched =
+    hasSearchTerm &&
+    Boolean(
+      (note.content && note.content.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (note.author_name && note.author_name.toLowerCase().includes(searchTerm.toLowerCase()))
+    );
+  const isSearchDimmed = hasSearchTerm && !isSearchMatched;
 
   return (
     <div
       ref={noteRef}
       className={`postit-card postit-${note.color || 'yellow'} font-${note.font_style || 'sans'} ${
         isSearchMatched ? 'search-matched' : ''
-      }`}
+      } ${isSearchDimmed ? 'search-dimmed' : ''}`}
       style={
         isFreeform
           ? {

@@ -38,6 +38,17 @@ export default function Whiteboard({
     (note) => (note.x_pos || 0) > Math.max(340, windowWidth - 100) || (note.y_pos || 0) > 1200
   );
 
+  // Listen for Escape key to clear search
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && searchTerm) {
+        setSearchTerm('');
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [searchTerm]);
+
   // Auto-scroll to first matching search result
   useEffect(() => {
     if (!searchTerm.trim() || filteredNotes.length === 0 || !isFreeform) return;
@@ -84,7 +95,7 @@ export default function Whiteboard({
           <Search size={16} style={{ color: 'var(--text-muted)' }} />
           <input
             type="text"
-            placeholder="ค้นหาข้อความ หรือ ชื่อคนแปะ..."
+            placeholder="ค้นหาข้อความ หรือ ชื่อคนแปะ... (Esc เพื่อล้าง)"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -104,6 +115,17 @@ export default function Whiteboard({
             <Pin size={14} style={{ color: 'var(--accent-color)' }} />
             {searchTerm ? `พบ ${filteredNotes.length} จาก ${notes.length} แผ่น` : `ทั้งหมด ${notes.length} แผ่น`}
           </span>
+
+          {searchTerm && (
+            <button
+              type="button"
+              className="btn-secondary"
+              onClick={() => setSearchTerm('')}
+              style={{ padding: '3px 10px', fontSize: '0.78rem', gap: 4 }}
+            >
+              <X size={13} /> ล้างการค้นหา
+            </button>
+          )}
 
           {/* Reset Out-of-bounds Notes Helper Button */}
           {outOfBoundsNotes.length > 0 && isFreeform && (
@@ -138,31 +160,36 @@ export default function Whiteboard({
           paddingRight: isFreeform ? 200 : 0,
         }}
       >
-        {filteredNotes.length === 0 ? (
+        {notes.length === 0 ? (
           <div className="empty-state">
             <StickyNote className="empty-icon" />
             <h3 style={{ fontSize: '1.15rem', fontWeight: 700, marginBottom: 8, color: 'var(--text-primary)' }}>
-              {searchTerm ? `ไม่พบ Post-it ที่ตรงกับ "${searchTerm}"` : 'ยังไม่มี Post-it บนกระดานนี้'}
+              ยังไม่มี Post-it บนกระดานนี้
             </h3>
             <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)', marginBottom: 20 }}>
-              {searchTerm
-                ? 'ลองค้นหาด้วยชื่อหรือข้อความอื่น หรือกดล้างการค้นหา'
-                : 'มาร่วมสร้างสรรค์ไอเดียแรกด้วยการแปะ Post-it บนกระดานสีขาวนี้กันเลย'}
+              มาร่วมสร้างสรรค์ไอเดียแรกด้วยการแปะ Post-it บนกระดานสีขาวนี้กันเลย
             </p>
-            {searchTerm ? (
-              <button type="button" className="btn-secondary" style={{ margin: '0 auto' }} onClick={() => setSearchTerm('')}>
-                <X size={16} />
-                ล้างการค้นหา
-              </button>
-            ) : (
-              <button type="button" className="btn-primary" style={{ margin: '0 auto' }} onClick={onOpenCreateNote}>
-                <Plus size={18} />
-                เพิ่ม Post-it แผ่นแรก
-              </button>
-            )}
+            <button type="button" className="btn-primary" style={{ margin: '0 auto' }} onClick={onOpenCreateNote}>
+              <Plus size={18} />
+              เพิ่ม Post-it แผ่นแรก
+            </button>
+          </div>
+        ) : searchTerm.trim() && filteredNotes.length === 0 ? (
+          <div className="empty-state">
+            <StickyNote className="empty-icon" />
+            <h3 style={{ fontSize: '1.15rem', fontWeight: 700, marginBottom: 8, color: 'var(--text-primary)' }}>
+              ไม่พบ Post-it ที่ตรงกับ "{searchTerm}"
+            </h3>
+            <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)', marginBottom: 20 }}>
+              ลองค้นหาด้วยชื่อหรือข้อความอื่น หรือกดล้างการค้นหา
+            </p>
+            <button type="button" className="btn-secondary" style={{ margin: '0 auto' }} onClick={() => setSearchTerm('')}>
+              <X size={16} />
+              ล้างการค้นหา
+            </button>
           </div>
         ) : (
-          filteredNotes.map((note) => (
+          notes.map((note) => (
             <PostItNote
               key={note.id}
               note={note}

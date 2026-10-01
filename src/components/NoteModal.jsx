@@ -76,8 +76,12 @@ export default function NoteModal({ initialData, defaultAuthor, onSave, onClose 
     reader.readAsDataURL(file);
   };
 
-  const handleSubmit = (e) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
+
     if (!content.trim() && !imageUrl.trim()) {
       setError('กรุณาใส่ข้อความ หรือ แนบรูปภาพบน Post-it');
       return;
@@ -85,13 +89,18 @@ export default function NoteModal({ initialData, defaultAuthor, onSave, onClose 
 
     const finalAuthor = authorName.trim() || 'ไม่ระบุชื่อ';
 
-    onSave({
-      content: content.trim(),
-      image_url: imageUrl.trim() || null,
-      author_name: finalAuthor,
-      color: selectedColor,
-      font_style: selectedFont,
-    });
+    setIsSubmitting(true);
+    try {
+      await onSave({
+        content: content.trim(),
+        image_url: imageUrl.trim() || null,
+        author_name: finalAuthor,
+        color: selectedColor,
+        font_style: selectedFont,
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -298,11 +307,11 @@ export default function NoteModal({ initialData, defaultAuthor, onSave, onClose 
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 24 }}>
-            <button type="button" className="btn-secondary" onClick={onClose}>
+            <button type="button" className="btn-secondary" onClick={onClose} disabled={isSubmitting}>
               ยกเลิก
             </button>
-            <button type="submit" className="btn-primary">
-              <PlusCircle size={16} /> แปะบนกระดาน
+            <button type="submit" className="btn-primary" disabled={isSubmitting}>
+              <PlusCircle size={16} /> {isSubmitting ? 'กำลังแปะ...' : 'แปะบนกระดาน'}
             </button>
           </div>
         </form>

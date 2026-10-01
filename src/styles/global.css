@@ -310,6 +310,14 @@ body {
   animation: pulseSearch 1.4s infinite alternate ease-in-out;
 }
 
+/* Search Dimmed Non-matched Cards */
+.postit-card.search-dimmed {
+  opacity: 0.25 !important;
+  filter: grayscale(40%) blur(0.5px);
+  pointer-events: none;
+  transition: opacity 0.25s ease, filter 0.25s ease, transform 0.25s ease;
+}
+
 @keyframes pulseSearch {
   from {
     box-shadow: 0 0 0 3px #3b82f6, 0 10px 30px rgba(59, 130, 246, 0.4);
