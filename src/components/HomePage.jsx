@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { ArrowRight, User, Sparkles, LayoutGrid, Plus, Lock, FileText, ChevronRight } from 'lucide-react';
 
 export default function HomePage({
-  rooms,
+  rooms = [],
   userName,
   onSelectRoom,
   onOpenCreateRoom,
