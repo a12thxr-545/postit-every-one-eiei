@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Search, StickyNote, Plus, Pin, Sparkles, X } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Search, StickyNote, Plus, Pin, Sparkles, X, Focus, RefreshCw } from 'lucide-react';
 import PostItNote from './PostItNote';
 
 export default function Whiteboard({
@@ -17,6 +17,7 @@ export default function Whiteboard({
   onViewNote,
 }) {
   const [searchTerm, setSearchTerm] = useState('');
+  const canvasRef = useRef(null);
 
   const filteredNotes = notes.filter((note) => {
     if (!searchTerm.trim()) return true;
@@ -26,6 +27,43 @@ export default function Whiteboard({
       (note.author_name && note.author_name.toLowerCase().includes(term))
     );
   });
+
+  // Calculate dynamic canvas dimensions to fit all notes (including far right/bottom notes dragged on PC/iPad)
+  const windowWidth = typeof window !== 'undefined' ? window.innerWidth : 1200;
+  const maxNoteX = notes.reduce((max, note) => Math.max(max, (note.x_pos || 0) + 340), isFreeform ? Math.max(1200, windowWidth + 200) : 0);
+  const maxNoteY = notes.reduce((max, note) => Math.max(max, (note.y_pos || 0) + 380), 750);
+
+  // Check if any notes are placed far outside standard visible screen bounds
+  const outOfBoundsNotes = notes.filter(
+    (note) => (note.x_pos || 0) > Math.max(340, windowWidth - 100) || (note.y_pos || 0) > 1200
+  );
+
+  // Auto-scroll to first matching search result
+  useEffect(() => {
+    if (!searchTerm.trim() || filteredNotes.length === 0 || !isFreeform) return;
+    const firstMatch = filteredNotes[0];
+    if (firstMatch && canvasRef.current) {
+      const scrollX = Math.max(0, (firstMatch.x_pos || 0) - 40);
+      const scrollY = Math.max(0, (firstMatch.y_pos || 0) - 80);
+      canvasRef.current.scrollTo({
+        left: scrollX,
+        top: scrollY,
+        behavior: 'smooth',
+      });
+    }
+  }, [searchTerm, isFreeform]);
+
+  // Pull notes back into standard viewport bounds if user clicks reset button
+  const handleResetNotesToBounds = () => {
+    const maxX = Math.max(20, windowWidth - 260);
+    notes.forEach((note, index) => {
+      if ((note.x_pos || 0) > maxX || (note.y_pos || 0) > 800) {
+        const safeX = Math.min(note.x_pos || 0, Math.max(20, (index % 4) * 230 + 20));
+        const safeY = Math.min(note.y_pos || 0, Math.max(60, Math.floor(index / 4) * 200 + 80));
+        onUpdateNote(note.id, { x_pos: safeX, y_pos: safeY });
+      }
+    });
+  };
 
   const handleDoubleClick = (e) => {
     if (e.target.classList.contains('whiteboard-canvas') || e.target.classList.contains('whiteboard-board-area')) {
@@ -38,11 +76,8 @@ export default function Whiteboard({
     }
   };
 
-  // Dynamically calculate board height based on lowest note position
-  const maxNoteY = notes.reduce((max, note) => Math.max(max, (note.y_pos || 0) + 320), 700);
-
   return (
-    <div className="whiteboard-canvas" onDoubleClick={handleDoubleClick}>
+    <div className="whiteboard-canvas" ref={canvasRef} onDoubleClick={handleDoubleClick}>
       {/* Sub-header Toolbar & Search Filter */}
       <div className="filter-bar">
         <div className="search-box">
@@ -57,16 +92,33 @@ export default function Whiteboard({
             <button
               onClick={() => setSearchTerm('')}
               style={{ border: 'none', background: 'none', cursor: 'pointer', opacity: 0.6 }}
+              title="ล้างการค้นหา"
             >
               <X size={14} />
             </button>
           )}
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-          <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-            <Pin size={14} style={{ color: 'var(--accent-color)' }} /> ทั้งหมด {notes.length} แผ่น
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: '0.85rem', color: 'var(--text-secondary)', flexWrap: 'wrap' }}>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontWeight: 600 }}>
+            <Pin size={14} style={{ color: 'var(--accent-color)' }} />
+            {searchTerm ? `พบ ${filteredNotes.length} จาก ${notes.length} แผ่น` : `ทั้งหมด ${notes.length} แผ่น`}
           </span>
+
+          {/* Reset Out-of-bounds Notes Helper Button */}
+          {outOfBoundsNotes.length > 0 && isFreeform && (
+            <button
+              type="button"
+              className="btn-secondary"
+              onClick={handleResetNotesToBounds}
+              style={{ padding: '4px 10px', fontSize: '0.78rem', gap: 6, borderRadius: 'var(--radius-full)' }}
+              title="ดึง Post-it ที่อยู่ไกลเกินขอบจอกลับมาในหน้าจอ"
+            >
+              <RefreshCw size={13} style={{ color: '#f59e0b' }} />
+              <span>ดึง Post-it ที่หลุดขอบกลับมา ({outOfBoundsNotes.length})</span>
+            </button>
+          )}
+
           {isFreeform && (
             <span className="desktop-only-hint" style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 4 }}>
               <Sparkles size={14} style={{ color: '#f59e0b' }} /> ดับเบิ้ลคลิกบนพื้นที่ว่างเพื่อวาง Post-it ใหม่ได้ทันที
@@ -79,26 +131,35 @@ export default function Whiteboard({
       <div
         className={`whiteboard-board-area ${!isFreeform ? 'grid-container' : ''}`}
         style={{
+          minWidth: isFreeform ? `${maxNoteX}px` : '100%',
           minHeight: isFreeform ? `${maxNoteY}px` : 'calc(100vh - 140px)',
           position: 'relative',
           paddingBottom: 200,
+          paddingRight: isFreeform ? 200 : 0,
         }}
       >
         {filteredNotes.length === 0 ? (
           <div className="empty-state">
             <StickyNote className="empty-icon" />
             <h3 style={{ fontSize: '1.15rem', fontWeight: 700, marginBottom: 8, color: 'var(--text-primary)' }}>
-              {searchTerm ? 'ไม่พบ Post-it ที่ค้นหา' : 'ยังไม่มี Post-it บนกระดานนี้'}
+              {searchTerm ? `ไม่พบ Post-it ที่ตรงกับ "${searchTerm}"` : 'ยังไม่มี Post-it บนกระดานนี้'}
             </h3>
             <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)', marginBottom: 20 }}>
               {searchTerm
-                ? 'ลองค้นหาด้วยคำอื่น หรือกดล้างการค้นหา'
+                ? 'ลองค้นหาด้วยชื่อหรือข้อความอื่น หรือกดล้างการค้นหา'
                 : 'มาร่วมสร้างสรรค์ไอเดียแรกด้วยการแปะ Post-it บนกระดานสีขาวนี้กันเลย'}
             </p>
-            <button type="button" className="btn-primary" style={{ margin: '0 auto' }} onClick={onOpenCreateNote}>
-              <Plus size={18} />
-              เพิ่ม Post-it แผ่นแรก
-            </button>
+            {searchTerm ? (
+              <button type="button" className="btn-secondary" style={{ margin: '0 auto' }} onClick={() => setSearchTerm('')}>
+                <X size={16} />
+                ล้างการค้นหา
+              </button>
+            ) : (
+              <button type="button" className="btn-primary" style={{ margin: '0 auto' }} onClick={onOpenCreateNote}>
+                <Plus size={18} />
+                เพิ่ม Post-it แผ่นแรก
+              </button>
+            )}
           </div>
         ) : (
           filteredNotes.map((note) => (
@@ -107,6 +168,7 @@ export default function Whiteboard({
               note={note}
               currentUserName={currentUserName}
               isFreeform={isFreeform}
+              searchTerm={searchTerm}
               onUpdate={onUpdateNote}
               onDelete={onDeleteNote}
               onToggleLike={onToggleLikeNote}
@@ -120,3 +182,4 @@ export default function Whiteboard({
     </div>
   );
 }
+

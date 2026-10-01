@@ -81,10 +81,10 @@ body {
   background-image: radial-gradient(var(--bg-canvas-dots) 1.5px, transparent 1.5px);
   background-size: 24px 24px;
   transition: background-color 0.3s ease;
-  overflow-x: hidden !important;
+  overflow-x: auto !important;
   overflow-y: auto !important;
   -webkit-overflow-scrolling: touch;
-  touch-action: pan-y;
+  touch-action: pan-x pan-y;
 }
 
 /* Header Navbar - Fixed at top */
@@ -302,6 +302,34 @@ body {
 
 .postit-card:hover {
   box-shadow: 0 16px 36px -6px rgba(0,0,0,0.18);
+}
+
+/* Search Matched Pulse Highlight */
+.postit-card.search-matched {
+  box-shadow: 0 0 0 4px var(--accent-color), 0 16px 40px rgba(37, 99, 235, 0.45) !important;
+  animation: pulseSearch 1.4s infinite alternate ease-in-out;
+}
+
+@keyframes pulseSearch {
+  from {
+    box-shadow: 0 0 0 3px #3b82f6, 0 10px 30px rgba(59, 130, 246, 0.4);
+  }
+  to {
+    box-shadow: 0 0 0 6px #60a5fa, 0 18px 45px rgba(96, 165, 250, 0.7);
+  }
+}
+
+mark.search-highlight {
+  background-color: #fef08a;
+  color: #854d0e;
+  padding: 1px 4px;
+  border-radius: 3px;
+  font-weight: 700;
+}
+
+[data-theme='dark'] mark.search-highlight {
+  background-color: #3b82f6;
+  color: #ffffff;
 }
 
 /* Post-it Tape / Pin Decorator */
@@ -971,7 +999,12 @@ body {
 /* Tablets & iPads (641px to 1024px) */
 @media (min-width: 641px) and (max-width: 1024px) {
   .app-header {
-    padding: 12px 18px;
+    padding: 10px 16px;
+    gap: 10px;
+  }
+
+  .room-selector-btn {
+    max-width: 170px;
   }
 
   .postit-card {
@@ -996,6 +1029,26 @@ body {
 
   .modal-card {
     max-width: 480px;
+  }
+}
+
+/* Medium & Compact Screens (under 920px) */
+@media (max-width: 920px) {
+  .brand-title-text {
+    display: none;
+  }
+  .header-add-room-btn {
+    display: none;
+  }
+  .user-badge-name {
+    display: none;
+  }
+  .user-badge-btn {
+    padding: 4px;
+    border-radius: 50%;
+  }
+  .header-pill-btn .btn-label {
+    display: none;
   }
 }
 

@@ -12,6 +12,20 @@ function getRotationAngle(id) {
   return deg === 0 ? -1 : deg;
 }
 
+function renderHighlightedText(text, term) {
+  if (!text || !term || !term.trim()) return text;
+  const parts = text.split(new RegExp(`(${term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi'));
+  return parts.map((part, i) =>
+    part.toLowerCase() === term.toLowerCase() ? (
+      <mark key={i} className="search-highlight">
+        {part}
+      </mark>
+    ) : (
+      part
+    )
+  );
+}
+
 export default function PostItNote({
   note,
   currentUserName,
@@ -20,6 +34,7 @@ export default function PostItNote({
   onToggleLike,
   onBringToFront,
   isFreeform,
+  searchTerm,
   onStartDrag,
   onViewNote,
 }) {
@@ -159,16 +174,25 @@ export default function PostItNote({
     minute: '2-digit',
   });
 
+  const isSearchMatched = Boolean(
+    searchTerm &&
+      searchTerm.trim() &&
+      ((note.content && note.content.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (note.author_name && note.author_name.toLowerCase().includes(searchTerm.toLowerCase())))
+  );
+
   return (
     <div
       ref={noteRef}
-      className={`postit-card postit-${note.color || 'yellow'} font-${note.font_style || 'sans'}`}
+      className={`postit-card postit-${note.color || 'yellow'} font-${note.font_style || 'sans'} ${
+        isSearchMatched ? 'search-matched' : ''
+      }`}
       style={
         isFreeform
           ? {
               left: `${Math.max(0, note.x_pos || 0)}px`,
               top: `${Math.max(0, note.y_pos || 0)}px`,
-              zIndex: note.z_index || 1,
+              zIndex: isSearchMatched ? 990 : note.z_index || 1,
               transform: isDragging ? 'scale(1.04) rotate(0deg)' : `rotate(${rotation.current}deg)`,
             }
           : {
@@ -189,7 +213,7 @@ export default function PostItNote({
             {(note.author_name || 'U').charAt(0).toUpperCase()}
           </div>
           <span style={{ maxWidth: 140, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            {note.author_name || 'ไม่ระบุชื่อ'}
+            {renderHighlightedText(note.author_name || 'ไม่ระบุชื่อ', searchTerm)}
           </span>
         </div>
         <span className="postit-time">{formattedTime}</span>
@@ -230,7 +254,7 @@ export default function PostItNote({
           }
         }}
       >
-        {note.content}
+        {renderHighlightedText(note.content, searchTerm)}
       </div>
 
       {/* Footer & Toolbar */}

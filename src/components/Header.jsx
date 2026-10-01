@@ -28,7 +28,7 @@ export default function Header({
           <Home size={18} />
         </button>
 
-        <div className="brand-title-group" onClick={onGoHome}>
+        <div className="brand-title-group" onClick={onGoHome} title="หน้าหลัก">
           <span className="brand-title-text">Minimal Board</span>
         </div>
 
@@ -38,12 +38,12 @@ export default function Header({
           onClick={onOpenRoomList}
           title="สลับห้อง/กระดาน"
         >
-          <LayoutGrid size={15} style={{ color: 'var(--accent-color)' }} />
-          <span>{activeRoom ? activeRoom.name : 'กำลังโหลด...'}</span>
+          <LayoutGrid size={15} style={{ color: 'var(--accent-color)', flexShrink: 0 }} />
+          <span className="room-selector-name">{activeRoom ? activeRoom.name : 'กำลังโหลด...'}</span>
           {activeRoom && activeRoom.is_protected === 1 && (
-            <Lock size={12} style={{ color: '#f59e0b' }} />
+            <Lock size={12} style={{ color: '#f59e0b', flexShrink: 0 }} />
           )}
-          <ChevronDown size={14} style={{ opacity: 0.6 }} />
+          <ChevronDown size={14} style={{ opacity: 0.6, flexShrink: 0 }} />
         </button>
       </div>
 
@@ -111,9 +111,10 @@ export default function Header({
           onClick={onOpenCreateNote}
         >
           <Plus size={16} />
-          <span>เขียน Post-it</span>
+          <span className="btn-label">เขียน Post-it</span>
         </button>
       </div>
     </header>
   );
 }
+
