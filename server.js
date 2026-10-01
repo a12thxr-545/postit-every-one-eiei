@@ -56,25 +56,6 @@ db.exec(`
 try { db.exec("ALTER TABLE rooms ADD COLUMN password TEXT;"); } catch(e) {}
 try { db.exec("ALTER TABLE notes ADD COLUMN image_url TEXT;"); } catch(e) {}
 
-// Seed Default Rooms if empty
-const countRooms = db.prepare('SELECT COUNT(*) as count FROM rooms').get();
-if (countRooms.count === 0) {
-  const insertRoom = db.prepare('INSERT INTO rooms (id, name, password) VALUES (?, ?, ?)');
-  insertRoom.run('general', 'กระดานทั่วไป (General Board)', null);
-  insertRoom.run('brainstorm', 'ระดมความคิด (Brainstorming)', null);
-  insertRoom.run('random', 'พูดคุยเรื่อยเปื่อย (Random)', null);
-
-  // Seed sample post-its without emojis
-  const insertNote = db.prepare(`
-    INSERT INTO notes (id, room_id, author_name, content, color, font_style, x_pos, y_pos, z_index, likes)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `);
-
-  insertNote.run('welcome-1', 'general', 'แอดมิน (Admin)', 'ยินดีต้อนรับสู่ Minimal Post-it Board\nพิมพ์ข้อความเพื่อเพิ่ม Post-it ใหม่บนกระดานได้เลยครับ', 'yellow', 'handwriting', 120, 100, 1, 5);
-  insertNote.run('welcome-2', 'general', 'ทีมงาน Minimal', 'ฟีเจอร์การใช้งาน:\n• ลาก post-it ย้ายไปมาได้อย่างอิสระ\n• สามารถกดเปลี่ยนสีตามสไตล์ minimal\n• แนบรูปภาพประกอบใน post-it ได้\n• สร้างห้องใส่รหัสหรือไม่ใส่ก็ได้', 'green', 'sans', 460, 120, 2, 8);
-  insertNote.run('welcome-3', 'general', 'มินิมอลบอย', 'กระดานสะอาด ใช้งานง่าย ชอบดีไซน์แบบนี้มากครับ', 'white', 'handwriting', 280, 360, 3, 3);
-}
-
 // WebSocket broadcast helper
 function broadcast(message, senderWs = null) {
   const data = JSON.stringify(message);

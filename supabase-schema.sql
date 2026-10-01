@@ -45,22 +45,9 @@ CREATE POLICY "Allow public update access to rooms" ON public.rooms FOR UPDATE U
 CREATE POLICY "Allow public update access to notes" ON public.notes FOR UPDATE USING (true);
 
 -- Allow Public Delete Access
+CREATE POLICY "Allow public delete access to rooms" ON public.rooms FOR DELETE USING (true);
 CREATE POLICY "Allow public delete access to notes" ON public.notes FOR DELETE USING (true);
 
 -- 4. Enable Supabase Realtime Replication for Instant Live Sync
 ALTER PUBLICATION supabase_realtime ADD TABLE public.rooms;
 ALTER PUBLICATION supabase_realtime ADD TABLE public.notes;
-
--- 5. Seed Default Rooms
-INSERT INTO public.rooms (id, name, password) VALUES
-  ('general', 'กระดานทั่วไป (General Board)', NULL),
-  ('brainstorm', 'ระดมความคิด (Brainstorming)', NULL),
-  ('random', 'พูดคุยเรื่อยเปื่อย (Random)', NULL)
-ON CONFLICT (id) DO NOTHING;
-
--- Seed Sample Notes
-INSERT INTO public.notes (id, room_id, author_name, content, color, font_style, x_pos, y_pos, z_index, likes) VALUES
-  ('welcome-1', 'general', 'แอดมิน (Admin)', 'ยินดีต้อนรับสู่ Minimal Post-it Board\nพิมพ์ข้อความเพื่อเพิ่ม Post-it ใหม่บนกระดานได้เลยครับ', 'yellow', 'handwriting', 120, 100, 1, 5),
-  ('welcome-2', 'general', 'ทีมงาน Minimal', 'ฟีเจอร์การใช้งาน:\n• ลาก post-it ย้ายไปมาได้อย่างอิสระ\n• สามารถกดเปลี่ยนสีตามสไตล์ minimal\n• แนบรูปภาพประกอบใน post-it ได้\n• สร้างห้องใส่รหัสหรือไม่ใส่ก็ได้', 'green', 'sans', 460, 120, 2, 8),
-  ('welcome-3', 'general', 'มินิมอลบอย', 'กระดานสะอาด ใช้งานง่าย ชอบดีไซน์แบบนี้มากครับ', 'white', 'handwriting', 280, 360, 3, 3)
-ON CONFLICT (id) DO NOTHING;
