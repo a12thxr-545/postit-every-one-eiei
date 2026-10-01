@@ -92,7 +92,8 @@ export default function PostItNote({
       const scrollLeft = canvas ? canvas.scrollLeft : 0;
       const scrollTop = canvas ? canvas.scrollTop : 0;
 
-      const newX = Math.max(10, e.clientX - canvasRect.left + scrollLeft - dragOffset.x);
+      const maxAllowedX = Math.max(10, (window.innerWidth || 360) - 280);
+      const newX = Math.min(maxAllowedX, Math.max(10, e.clientX - canvasRect.left + scrollLeft - dragOffset.x));
       const newY = Math.max(10, e.clientY - canvasRect.top + scrollTop - dragOffset.y);
 
       onStartDrag(note.id, newX, newY);
