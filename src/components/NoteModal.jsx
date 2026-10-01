@@ -20,7 +20,9 @@ const FONT_OPTIONS = [
 export default function NoteModal({ initialData, defaultAuthor, onSave, onClose }) {
   const [content, setContent] = useState(initialData?.content || '');
   const [imageUrl, setImageUrl] = useState(initialData?.image_url || '');
-  const [authorName, setAuthorName] = useState(initialData?.author_name || defaultAuthor || '');
+  const [authorName, setAuthorName] = useState(
+    initialData?.author_name || defaultAuthor || localStorage.getItem('postit_username') || ''
+  );
   const [selectedColor, setSelectedColor] = useState(initialData?.color || 'yellow');
   const [selectedFont, setSelectedFont] = useState(initialData?.font_style || 'handwriting');
   const [imageMode, setImageMode] = useState('upload'); // 'upload' | 'url'

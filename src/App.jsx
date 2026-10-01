@@ -19,7 +19,7 @@ export default function App() {
 
   // User Identity State
   const [userName, setUserName] = useState(() => localStorage.getItem('postit_username') || '');
-  const [showNameModal, setShowNameModal] = useState(() => !localStorage.getItem('postit_username'));
+  const [showNameModal, setShowNameModal] = useState(false);
 
   // Rooms & Active Room State
   const [rooms, setRooms] = useState([]);
@@ -250,6 +250,11 @@ export default function App() {
 
   const handleCreateNote = async (noteData) => {
     try {
+      if (noteData.author_name) {
+        setUserName(noteData.author_name);
+        localStorage.setItem('postit_username', noteData.author_name);
+      }
+
       const isMobile = window.innerWidth <= 640;
       const maxSpawnX = isMobile ? 110 : 280;
       const payload = {
