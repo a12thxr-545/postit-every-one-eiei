@@ -664,15 +664,30 @@ mark.search-highlight {
   width: 100% !important;
 }
 
-/* Toolbar & Filter Bar */
+/* Toolbar & Filter Bar - Sticky Floating Bar */
 .filter-bar {
+  position: sticky;
+  top: 0;
+  left: 0;
+  z-index: 90;
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 12px 24px;
   gap: 16px;
-  max-width: 1400px;
-  margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
+  background-color: rgba(248, 250, 252, 0.88);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border-color);
+  box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.05);
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+[data-theme='dark'] .filter-bar {
+  background-color: rgba(15, 23, 42, 0.88);
+  box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.3);
 }
 
 .filter-info-group {
