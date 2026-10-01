@@ -623,6 +623,11 @@ mark.search-highlight {
   min-height: 110px;
 }
 
+.form-textarea::placeholder {
+  color: #64748b;
+  opacity: 0.75;
+}
+
 /* Color Selector Swatches */
 .color-picker-grid {
   display: flex;

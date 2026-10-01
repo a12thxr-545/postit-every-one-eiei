@@ -135,7 +135,7 @@ export default function NoteModal({ initialData, defaultAuthor, onSave, onClose 
               style={{
                 backgroundColor: COLOR_OPTIONS.find((c) => c.id === selectedColor)?.bg || '#fff',
                 borderColor: COLOR_OPTIONS.find((c) => c.id === selectedColor)?.border || '#e2e8f0',
-                color: selectedColor === 'white' ? '#1e293b' : 'inherit',
+                color: '#0f172a',
                 fontSize: selectedFont === 'handwriting' ? '1.3rem' : '0.95rem',
               }}
             />
