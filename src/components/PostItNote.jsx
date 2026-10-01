@@ -110,10 +110,8 @@ export default function PostItNote({
       const scrollLeft = canvas ? canvas.scrollLeft : 0;
       const scrollTop = canvas ? canvas.scrollTop : 0;
 
-      const noteWidth = noteRef.current ? noteRef.current.offsetWidth : (window.innerWidth <= 640 ? 215 : 270);
-      const maxAllowedX = Math.max(10, (window.innerWidth || 360) - noteWidth - 12);
-      const newX = Math.min(maxAllowedX, Math.max(10, e.clientX - canvasRect.left + scrollLeft - dragOffset.x));
-      const newY = Math.max(10, e.clientY - canvasRect.top + scrollTop - dragOffset.y);
+      const newX = Math.max(0, Math.round(e.clientX - canvasRect.left + scrollLeft - dragOffset.x));
+      const newY = Math.max(0, Math.round(e.clientY - canvasRect.top + scrollTop - dragOffset.y));
 
       onStartDrag(note.id, newX, newY);
     };
@@ -127,10 +125,8 @@ export default function PostItNote({
         const scrollLeft = canvas ? canvas.scrollLeft : 0;
         const scrollTop = canvas ? canvas.scrollTop : 0;
 
-        const noteWidth = noteRef.current ? noteRef.current.offsetWidth : (window.innerWidth <= 640 ? 215 : 270);
-        const maxAllowedX = Math.max(10, (window.innerWidth || 360) - noteWidth - 12);
-        const newX = Math.min(maxAllowedX, Math.max(10, touch.clientX - canvasRect.left + scrollLeft - dragOffset.x));
-        const newY = Math.max(10, touch.clientY - canvasRect.top + scrollTop - dragOffset.y);
+        const newX = Math.max(0, Math.round(touch.clientX - canvasRect.left + scrollLeft - dragOffset.x));
+        const newY = Math.max(0, Math.round(touch.clientY - canvasRect.top + scrollTop - dragOffset.y));
 
         onStartDrag(note.id, newX, newY);
       }
@@ -163,8 +159,6 @@ export default function PostItNote({
     minute: '2-digit',
   });
 
-  const cardWidth = typeof window !== 'undefined' && window.innerWidth <= 640 ? 215 : 240;
-
   return (
     <div
       ref={noteRef}
@@ -172,8 +166,8 @@ export default function PostItNote({
       style={
         isFreeform
           ? {
-              left: `min(${Math.max(10, note.x_pos || 10)}px, calc(100vw - ${cardWidth + 14}px))`,
-              top: `${Math.max(10, note.y_pos || 10)}px`,
+              left: `${Math.max(0, note.x_pos || 0)}px`,
+              top: `${Math.max(0, note.y_pos || 0)}px`,
               zIndex: note.z_index || 1,
               transform: isDragging ? 'scale(1.04) rotate(0deg)' : `rotate(${rotation.current}deg)`,
             }
