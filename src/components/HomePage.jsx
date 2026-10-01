@@ -1,13 +1,15 @@
-import React from 'react';
-import { StickyNote, ArrowRight, User, Sparkles, PenTool } from 'lucide-react';
+import React, { useState } from 'react';
+import { ArrowRight, User, Sparkles, LayoutGrid, Plus, Lock, FileText, ChevronRight } from 'lucide-react';
 
 export default function HomePage({
+  rooms,
   userName,
-  onEnterBoard,
+  onSelectRoom,
+  onOpenCreateRoom,
   onOpenEditName,
-  isDarkMode,
-  onToggleTheme,
 }) {
+  const [showRoomSelection, setShowRoomSelection] = useState(false);
+
   return (
     <div
       className="home-page-container whiteboard-canvas"
@@ -22,115 +24,216 @@ export default function HomePage({
         position: 'relative',
       }}
     >
-      {/* Home Header Navbar */}
-      <header className="app-header" style={{ width: '100%', maxWidth: 1100, borderRadius: 'var(--radius-full)' }}>
-        <div className="brand-section">
-          <div className="brand-logo">
-            <StickyNote size={22} />
+      {/* Header - No Logo as requested */}
+      <header
+        style={{
+          width: '100%',
+          maxWidth: 1000,
+          display: 'flex',
+          justifyContent: 'flex-end',
+          alignItems: 'center',
+          padding: '12px 0',
+        }}
+      >
+        {/* User Badge Pill */}
+        <button
+          type="button"
+          className="user-badge-btn"
+          onClick={onOpenEditName}
+          title="คลิกเพื่อเปลี่ยนชื่อของคุณ"
+        >
+          <div className="user-avatar">
+            {(userName || 'U').charAt(0).toUpperCase()}
           </div>
-          <div className="brand-title">
-            Minimal Board
-            <span className="brand-badge">Whiteboard</span>
-          </div>
-        </div>
-
-        <div className="header-actions">
-          {/* User Badge Pill */}
-          <button
-            type="button"
-            className="user-badge-btn"
-            onClick={onOpenEditName}
-            title="คลิกเพื่อเปลี่ยนชื่อของคุณ"
-          >
-            <div className="user-avatar">
-              {(userName || 'U').charAt(0).toUpperCase()}
-            </div>
-            <span>คุณ: {userName || 'ไม่ระบุชื่อ'}</span>
-          </button>
-        </div>
+          <span>คุณ: {userName || 'ไม่ระบุชื่อ'}</span>
+        </button>
       </header>
 
-      {/* Main Animated Post-it Section */}
-      <main
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          margin: 'auto 0',
-          cursor: 'pointer',
-        }}
-        onClick={onEnterBoard}
-      >
-        {/* Animated Hero Post-it Note Card */}
-        <div className="animated-hero-postit" title="คลิกเพื่อเริ่มเขียน Post-it บนกระดาน">
-          {/* Tape Decorator */}
-          <div className="postit-tape" style={{ width: 90, height: 26, top: -14 }} />
+      {/* Main Content Area */}
+      {!showRoomSelection ? (
+        /* Step 1: Stacked Post-it Animation Screen */
+        <main
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            margin: 'auto 0',
+            cursor: 'pointer',
+          }}
+          onClick={() => setShowRoomSelection(true)}
+        >
+          {/* Stacked Post-it Container */}
+          <div className="postit-stack-container" title="คลิกเพื่อเลือกห้องและเข้าสู่กระดาน">
+            {/* Stacked Layer 3 (Bottom) */}
+            <div className="postit-stack-layer layer-bottom" />
 
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', opacity: 0.8, marginBottom: 12 }}>
-            <span style={{ fontSize: '0.82rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>
-              <PenTool size={14} /> Minimal Note
-            </span>
-            <span style={{ fontSize: '0.75rem', opacity: 0.7 }}>Click to enter</span>
+            {/* Stacked Layer 2 (Middle) */}
+            <div className="postit-stack-layer layer-middle" />
+
+            {/* Stacked Layer 1 (Top Post-it with text) */}
+            <div className="postit-stack-layer layer-top">
+              {/* Tape Decorator */}
+              <div className="postit-tape" style={{ width: 85, height: 24, top: -12 }} />
+
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', opacity: 0.75, marginBottom: 8 }}>
+                <span style={{ fontSize: '0.8rem', fontWeight: 700 }}>Minimal Board</span>
+                <span style={{ fontSize: '0.72rem' }}>Click to continue</span>
+              </div>
+
+              {/* Text: write to postit */}
+              <div
+                style={{
+                  fontFamily: 'var(--font-handwriting)',
+                  fontSize: 'clamp(2.4rem, 5.5vw, 3.6rem)',
+                  fontWeight: 700,
+                  lineHeight: 1.15,
+                  color: '#713f12',
+                  textAlign: 'center',
+                  margin: '20px 0 28px 0',
+                }}
+              >
+                write to postit
+              </div>
+
+              {/* Action Hint Pill */}
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 8,
+                  fontSize: '0.9rem',
+                  fontWeight: 700,
+                  color: '#713f12',
+                  backgroundColor: 'rgba(255, 255, 255, 0.65)',
+                  padding: '9px 16px',
+                  borderRadius: 'var(--radius-full)',
+                  border: '1px solid rgba(113, 63, 18, 0.12)',
+                }}
+              >
+                <span>กดเพื่อเลือกกระดาน</span>
+                <ArrowRight size={16} />
+              </div>
+            </div>
           </div>
 
-          {/* Main Requested Text: write to postit */}
-          <div
-            className="hero-postit-text"
-            style={{
-              fontFamily: 'var(--font-handwriting)',
-              fontSize: 'clamp(2.5rem, 6vw, 3.8rem)',
-              fontWeight: 700,
-              lineHeight: 1.15,
-              color: '#713f12',
-              textAlign: 'center',
-              margin: '24px 0 32px 0',
-              textShadow: '0 1px 2px rgba(0,0,0,0.05)',
-            }}
-          >
-            write to postit
-          </div>
-
-          {/* Call-to-action bar on bottom of note */}
           <div
             style={{
+              marginTop: 32,
+              fontSize: '0.95rem',
+              color: 'var(--text-secondary)',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center',
               gap: 8,
-              fontSize: '0.95rem',
-              fontWeight: 700,
-              color: '#713f12',
-              backgroundColor: 'rgba(255, 255, 255, 0.55)',
-              padding: '10px 18px',
-              borderRadius: 'var(--radius-full)',
-              border: '1px solid rgba(113, 63, 18, 0.15)',
-              transition: 'all 0.2s ease',
+              fontWeight: 600,
             }}
           >
-            <span>เข้าสู่กระดานไวท์บอร์ด</span>
-            <ArrowRight size={18} />
+            <Sparkles size={16} style={{ color: 'var(--accent-color)' }} />
+            คลิกที่ Post-it เพื่อเลือกห้องและเริ่มแปะข้อความ
           </div>
-        </div>
-
-        {/* Subtitle Hint */}
-        <div
+        </main>
+      ) : (
+        /* Step 2: Select Room Screen */
+        <main
           style={{
-            marginTop: 28,
-            fontSize: '0.95rem',
-            color: 'var(--text-secondary)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8,
-            fontWeight: 600,
+            maxWidth: 860,
+            width: '100%',
+            margin: 'auto 0',
+            animation: 'fadeIn 0.3s ease-out',
           }}
         >
-          <Sparkles size={16} style={{ color: 'var(--accent-color)' }} />
-          คลิกที่ Post-it หรือปุ่มด้านบนเพื่อเริ่มเขียนข้อความ
-        </div>
-      </main>
+          <div style={{ textAlign: 'center', marginBottom: 32 }}>
+            <h2 style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
+              <LayoutGrid size={26} style={{ color: 'var(--accent-color)' }} />
+              เลือกกระดาน / ห้องที่ต้องการเข้า
+            </h2>
+            <p style={{ fontSize: '0.95rem', color: 'var(--text-secondary)' }}>
+              คลิกเลือกห้องเพื่อเข้าสู่กระดานแปะ Post-it หรือกดสร้างกระดานใหม่
+            </p>
+          </div>
 
-      {/* Footer minimal info */}
+          {/* Rooms Grid */}
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
+              gap: 16,
+              marginBottom: 28,
+            }}
+          >
+            {rooms.map((room) => {
+              const isProtected = room.is_protected === 1;
+              return (
+                <div
+                  key={room.id}
+                  onClick={() => onSelectRoom(room.id)}
+                  style={{
+                    backgroundColor: 'var(--bg-card)',
+                    border: '1px solid var(--border-color)',
+                    borderRadius: 'var(--radius-md)',
+                    padding: '20px 18px',
+                    cursor: 'pointer',
+                    boxShadow: 'var(--shadow-sm)',
+                    transition: 'all 0.2s ease',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                  }}
+                  className="room-selection-card"
+                >
+                  <div>
+                    <div style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                      {room.name}
+                      {isProtected && <Lock size={12} style={{ color: '#f59e0b' }} title="มีรหัสผ่าน" />}
+                    </div>
+                    <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                      <FileText size={12} />
+                      {room.note_count || 0} Post-it แปะอยู่
+                    </div>
+                  </div>
+
+                  <div
+                    style={{
+                      width: 32,
+                      height: 32,
+                      borderRadius: '50%',
+                      backgroundColor: 'var(--accent-light)',
+                      color: 'var(--accent-color)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <ChevronRight size={18} />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Bottom Actions */}
+          <div style={{ display: 'flex', justifyContent: 'center', gap: 14 }}>
+            <button
+              type="button"
+              className="btn-secondary"
+              onClick={() => setShowRoomSelection(false)}
+            >
+              ย้อนกลับ
+            </button>
+            <button
+              type="button"
+              className="btn-primary"
+              onClick={onOpenCreateRoom}
+            >
+              <Plus size={16} />
+              สร้างกระดานใหม่
+            </button>
+          </div>
+        </main>
+      )}
+
+      {/* Footer */}
       <footer style={{ fontSize: '0.8rem', color: 'var(--text-muted)', textAlign: 'center', paddingBottom: 8 }}>
         Minimal Post-it Board • Real-time Collaboration
       </footer>

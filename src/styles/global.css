@@ -701,39 +701,61 @@ body {
   animation: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* Animated Hero Post-it for HomePage */
-.animated-hero-postit {
-  width: min(90vw, 440px);
-  min-height: 290px;
-  background: linear-gradient(135deg, #fffbeb 0%, #fef08a 100%);
-  color: #713f12;
-  border-radius: 6px;
-  padding: 32px 28px 24px 28px;
+/* Stacked Post-it Deck for HomePage */
+.postit-stack-container {
   position: relative;
-  box-shadow: 0 20px 45px -10px rgba(113, 63, 18, 0.22), 0 8px 16px -4px rgba(0, 0, 0, 0.08);
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  transform-origin: center center;
-  animation: floatHeroNote 4s ease-in-out infinite alternate;
-  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  width: min(88vw, 420px);
+  height: 280px;
+  margin: 12px 0;
+}
+
+.postit-stack-layer {
+  position: absolute;
+  inset: 0;
+  border-radius: 6px;
+  box-shadow: 0 16px 36px -8px rgba(113, 63, 18, 0.18), 0 6px 12px -3px rgba(0, 0, 0, 0.06);
+  transition: all 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  /* Solid single color shade as requested */
+  background-color: #fef08a;
   border-bottom: 3px solid #fde68a;
 }
 
-.animated-hero-postit:hover {
-  transform: scale(1.06) rotate(-1deg) translateY(-8px);
-  box-shadow: 0 30px 60px -12px rgba(113, 63, 18, 0.32), 0 12px 24px -4px rgba(0, 0, 0, 0.12);
+/* Layer 3 - Bottom */
+.postit-stack-layer.layer-bottom {
+  transform: rotate(-6deg) translate(-12px, 14px);
+  opacity: 0.7;
 }
 
-@keyframes floatHeroNote {
-  0% {
-    transform: rotate(-1.5deg) translateY(0px);
-  }
-  50% {
-    transform: rotate(1deg) translateY(-10px);
-  }
-  100% {
-    transform: rotate(-2deg) translateY(-4px);
-  }
+/* Layer 2 - Middle */
+.postit-stack-layer.layer-middle {
+  transform: rotate(5deg) translate(10px, 6px);
+  opacity: 0.85;
 }
+
+/* Layer 1 - Top Post-it */
+.postit-stack-layer.layer-top {
+  transform: rotate(-1deg) translate(0, 0);
+  padding: 28px 24px 20px 24px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  color: #713f12;
+}
+
+/* Hover Deck Fan Out Effect */
+.postit-stack-container:hover .layer-bottom {
+  transform: rotate(-10deg) translate(-22px, 20px) scale(1.02);
+  opacity: 0.85;
+}
+
+.postit-stack-container:hover .layer-middle {
+  transform: rotate(8deg) translate(18px, 10px) scale(1.03);
+  opacity: 0.95;
+}
+
+.postit-stack-container:hover .layer-top {
+  transform: rotate(-2deg) translateY(-8px) scale(1.04);
+  box-shadow: 0 26px 52px -10px rgba(113, 63, 18, 0.28);
+}
+
 
