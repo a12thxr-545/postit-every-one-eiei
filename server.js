@@ -78,150 +78,7 @@ function broadcast(message, senderWs = null) {
   });
 }
 
-// Admin Security Configuration
-const ADMIN_PASSCODE = process.env.ADMIN_PASSCODE || 'axthur545eiei';
-const ADMIN_SECRET_KEY = process.env.ADMIN_SECRET_KEY || 'axthur545eiei_super_secret_key_2026';
-
-function isRequestFromAdmin(req) {
-  const clientSecret = req.headers['x-admin-secret'] || req.headers['x-admin-bypass'] || req.query.admin_secret;
-  return clientSecret === ADMIN_SECRET_KEY || clientSecret === ADMIN_PASSCODE;
-}
-
-function verifyAdminSecret(req, res, next) {
-  if (isRequestFromAdmin(req)) {
-    return next();
-  }
-  return res.status(403).json({ success: false, error: 'Access Denied: Invalid Admin Credentials' });
-}
-
 // API Routes
-
-// Verify Admin Passcode
-app.post('/api/admin/verify', (req, res) => {
-  const { passcode } = req.body;
-  if (passcode === ADMIN_PASSCODE || passcode === ADMIN_SECRET_KEY) {
-    return res.json({ success: true, token: ADMIN_SECRET_KEY });
-  }
-  return res.status(401).json({ success: false, error: 'รหัสผ่านแอดมินไม่ถูกต้อง (Invalid Admin Passcode)' });
-});
-
-// Admin Stats & Overview
-app.get('/api/admin/stats', verifyAdminSecret, async (req, res) => {
-  try {
-    if (isSupabaseConfigured) {
-      const { data: roomsData, error: roomsErr } = await supabase.from('rooms').select('id, name, created_at, password, notes(id)');
-      const { data: notesData, error: notesErr } = await supabase.from('notes').select('*, rooms(name)');
-
-      if (roomsErr || notesErr) throw roomsErr || notesErr;
-
-      const formattedRooms = (roomsData || []).map((r) => ({
-        id: r.id,
-        name: r.name,
-        password: r.password || '',
-        created_at: r.created_at,
-        is_protected: r.password && r.password !== '' ? 1 : 0,
-        note_count: r.notes ? r.notes.length : 0,
-      }));
-
-      const formattedNotes = (notesData || []).map((n) => ({
-        ...n,
-        room_name: n.rooms ? n.rooms.name : n.room_id,
-      }));
-
-      const totalLikes = formattedNotes.reduce((sum, n) => sum + (n.likes || 0), 0);
-      const protectedRooms = formattedRooms.filter((r) => r.is_protected === 1).length;
-
-      return res.json({
-        success: true,
-        stats: {
-          totalRooms: formattedRooms.length,
-          totalNotes: formattedNotes.length,
-          totalLikes,
-          protectedRooms,
-        },
-        rooms: formattedRooms,
-        notes: formattedNotes,
-      });
-    }
-
-    const rooms = db.prepare(`
-      SELECT r.id, r.name, r.password, r.created_at, 
-             CASE WHEN r.password IS NOT NULL AND r.password != '' THEN 1 ELSE 0 END as is_protected,
-             COUNT(n.id) as note_count 
-      FROM rooms r 
-      LEFT JOIN notes n ON r.id = n.room_id 
-      GROUP BY r.id 
-      ORDER BY r.created_at ASC
-    `).all();
-
-    const notes = db.prepare(`
-      SELECT n.*, r.name as room_name 
-      FROM notes n 
-      LEFT JOIN rooms r ON n.room_id = r.id 
-      ORDER BY n.created_at DESC
-    `).all();
-
-    const totalLikes = notes.reduce((sum, n) => sum + (n.likes || 0), 0);
-    const protectedRooms = rooms.filter((r) => r.is_protected === 1).length;
-
-    res.json({
-      success: true,
-      stats: {
-        totalRooms: rooms.length,
-        totalNotes: notes.length,
-        totalLikes,
-        protectedRooms,
-      },
-      rooms,
-      notes,
-    });
-  } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
-
-// Admin Delete Room
-app.delete('/api/admin/rooms/:roomId', verifyAdminSecret, async (req, res) => {
-  try {
-    const { roomId } = req.params;
-
-    if (isSupabaseConfigured) {
-      await supabase.from('notes').delete().eq('room_id', roomId);
-      const { error } = await supabase.from('rooms').delete().eq('id', roomId);
-      if (error) throw error;
-
-      broadcast({ type: 'ROOM_DELETED', roomId });
-      return res.json({ success: true, roomId });
-    }
-
-    db.prepare('DELETE FROM notes WHERE room_id = ?').run(roomId);
-    db.prepare('DELETE FROM rooms WHERE id = ?').run(roomId);
-
-    broadcast({ type: 'ROOM_DELETED', roomId });
-    res.json({ success: true, roomId });
-  } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
-
-// Admin Clear All Notes
-app.delete('/api/admin/clear-all-notes', verifyAdminSecret, async (req, res) => {
-  try {
-    if (isSupabaseConfigured) {
-      const { error } = await supabase.from('notes').delete().neq('id', 'dummy-id-to-delete-all');
-      if (error) throw error;
-
-      broadcast({ type: 'ALL_NOTES_CLEARED' });
-      return res.json({ success: true });
-    }
-
-    db.prepare('DELETE FROM notes').run();
-    broadcast({ type: 'ALL_NOTES_CLEARED' });
-    res.json({ success: true });
-  } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
 
 // Get all rooms
 app.get('/api/rooms', async (req, res) => {
@@ -329,11 +186,10 @@ app.post('/api/rooms', async (req, res) => {
 app.get('/api/rooms/:roomId/notes', async (req, res) => {
   try {
     const { roomId } = req.params;
-    const isAdminBypass = isRequestFromAdmin(req);
 
     if (isSupabaseConfigured) {
       const { data: room } = await supabase.from('rooms').select('password').eq('id', roomId).single();
-      if (!isAdminBypass && room && room.password && room.password !== '') {
+      if (room && room.password && room.password !== '') {
         const providedPassword = req.headers['x-room-password'] || req.query.password;
         if (providedPassword !== room.password) {
           return res.status(401).json({ success: false, is_protected: true, error: 'ต้องใช้รหัสผ่านในการเข้ากระดานนี้' });
@@ -351,7 +207,7 @@ app.get('/api/rooms/:roomId/notes', async (req, res) => {
     }
 
     const room = db.prepare('SELECT password FROM rooms WHERE id = ?').get(roomId);
-    if (!isAdminBypass && room && room.password && room.password !== '') {
+    if (room && room.password && room.password !== '') {
       const providedPassword = req.headers['x-room-password'] || req.query.password;
       if (providedPassword !== room.password) {
         return res.status(401).json({ success: false, is_protected: true, error: 'ต้องใช้รหัสผ่านในการเข้ากระดานนี้' });

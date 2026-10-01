@@ -11,15 +11,10 @@ import NoteModal from './components/NoteModal';
 import PasswordModal from './components/PasswordModal';
 
 import ViewNoteModal from './components/ViewNoteModal';
-import AdminPanel from './components/AdminPanel';
 
 export default function App() {
-  // View Router State ('home' | 'board' | 'admin')
+  // View Router State ('home' | 'board')
   const [viewMode, setViewMode] = useState(() => {
-    const pathname = window.location.pathname;
-    if (pathname.includes('/axthur545eiei')) {
-      return 'admin';
-    }
     const params = new URLSearchParams(window.location.search);
     return params.has('room') ? 'board' : 'home';
   });
@@ -97,22 +92,17 @@ export default function App() {
   const fetchNotes = useCallback(async (roomId, password = null) => {
     try {
       const storedPwd = password || sessionStorage.getItem(`room_pwd_${roomId}`) || '';
-      const isAdmin = window.location.pathname.includes('/axthur545eiei') || sessionStorage.getItem('is_admin') === 'true';
-
       const res = await fetch(`/api/rooms/${roomId}/notes`, {
         headers: {
           'x-room-password': storedPwd,
-          'x-admin-bypass': isAdmin ? 'true' : 'false',
         },
       });
       const data = await res.json();
 
       if (res.status === 401 || (data.is_protected && !data.success)) {
-        if (!isAdmin) {
-          setPendingRoomId(roomId);
-          setShowPasswordModal(true);
-          return false;
-        }
+        setPendingRoomId(roomId);
+        setShowPasswordModal(true);
+        return false;
       }
 
       if (data.success) {
@@ -129,14 +119,9 @@ export default function App() {
   }, []);
 
   // Room Switch Handler
-  const changeRoom = async (roomId, isDirectAdminBypass = false) => {
-    const isAdmin = isDirectAdminBypass || window.location.pathname.includes('/axthur545eiei') || sessionStorage.getItem('is_admin') === 'true';
-    if (isAdmin) {
-      sessionStorage.setItem('is_admin', 'true');
-    }
-
+  const changeRoom = async (roomId) => {
     const targetRoom = rooms.find((r) => r.id === roomId);
-    if (targetRoom && targetRoom.is_protected === 1 && !isAdmin) {
+    if (targetRoom && targetRoom.is_protected === 1) {
       const storedPwd = sessionStorage.getItem(`room_pwd_${roomId}`);
       if (!storedPwd) {
         setPendingRoomId(roomId);
@@ -146,7 +131,7 @@ export default function App() {
     }
 
     const success = await fetchNotes(roomId);
-    if (success !== false || isAdmin) {
+    if (success !== false) {
       setActiveRoomId(roomId);
       setViewMode('board');
       const newUrl = `${window.location.pathname}?room=${roomId}`;
@@ -381,14 +366,7 @@ export default function App() {
 
   return (
     <div className="app-container">
-      {viewMode === 'admin' ? (
-        /* Super Admin Control Panel (/axthur545eiei) */
-        <AdminPanel
-          onGoHome={handleGoHome}
-          onSelectRoom={(roomId) => changeRoom(roomId)}
-          addToast={addToast}
-        />
-      ) : viewMode === 'home' ? (
+      {viewMode === 'home' ? (
         /* Home Landing Page */
         <HomePage
           rooms={rooms}
