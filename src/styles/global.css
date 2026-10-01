@@ -788,19 +788,36 @@ body {
 /* Mobile Phones (up to 640px) */
 @media (max-width: 640px) {
   .app-header {
-    padding: 10px 12px;
+    padding: 8px 12px;
     gap: 8px;
-    flex-wrap: wrap;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
   }
 
-  .brand-title {
-    font-size: 0.95rem;
+  .brand-section {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .brand-title-group {
+    display: none;
+  }
+
+  .header-home-btn {
+    width: 32px !important;
+    height: 32px !important;
+    flex-shrink: 0;
   }
 
   .room-selector-btn {
+    flex: 1;
+    max-width: 170px;
     padding: 5px 10px;
-    font-size: 0.78rem;
-    max-width: 140px;
+    font-size: 0.8rem;
   }
 
   .room-selector-btn span {
@@ -809,31 +826,58 @@ body {
     white-space: nowrap;
   }
 
-  .user-badge-btn {
-    padding: 5px 10px;
-    font-size: 0.75rem;
-  }
-
   .header-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     gap: 6px;
     width: 100%;
-    justify-content: space-between;
   }
 
-  .btn-primary, .btn-secondary {
-    padding: 7px 12px;
+  .user-badge-name {
+    display: none;
+  }
+
+  .user-badge-btn {
+    padding: 4px;
+    border-radius: 50%;
+  }
+
+  .header-pill-btn {
+    padding: 5px 9px;
+    font-size: 0.76rem;
+  }
+
+  .header-add-room-btn {
+    display: none;
+  }
+
+  .header-write-btn {
+    padding: 6px 12px;
     font-size: 0.8rem;
+    font-weight: 700;
+  }
+
+  .header-tool-icon {
+    width: 32px;
+    height: 32px;
   }
 
   .filter-bar {
-    padding: 10px 14px;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 10px;
+    padding: 8px 12px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
   }
 
   .search-box {
-    width: 100%;
+    flex: 1;
+    width: auto;
+  }
+
+  .desktop-only-hint {
+    display: none !important;
   }
 
   /* Responsive Post-it Card on Mobile (Compact & Fits Viewport) */

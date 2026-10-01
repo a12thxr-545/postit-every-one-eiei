@@ -1,5 +1,5 @@
 import React from 'react';
-import { LayoutGrid, Plus, User, Moon, Sun, Grid, Move, Share2, Lock, ChevronDown, Home } from 'lucide-react';
+import { LayoutGrid, Plus, Moon, Sun, Grid, Move, Share2, Lock, ChevronDown, Home } from 'lucide-react';
 
 export default function Header({
   activeRoom,
@@ -17,106 +17,101 @@ export default function Header({
 }) {
   return (
     <header className="app-header">
-      {/* Left Brand & Room Selector */}
+      {/* Brand & Room Switcher */}
       <div className="brand-section">
-        {/* Home Button */}
         <button
           type="button"
-          className="btn-icon"
+          className="btn-icon header-home-btn"
           onClick={onGoHome}
-          title="กลับไปยังหน้าหลัก (Home)"
-          style={{ width: 38, height: 38 }}
+          title="หน้าหลัก"
         >
-          <Home size={20} />
+          <Home size={18} />
         </button>
 
-        <div onClick={onGoHome} style={{ cursor: 'pointer' }}>
-          <div className="brand-title">
-            Minimal Board
-            <span className="brand-badge">Whiteboard</span>
-          </div>
+        <div className="brand-title-group" onClick={onGoHome}>
+          <span className="brand-title-text">Minimal Board</span>
         </div>
 
-        {/* Room Switcher Pill */}
         <button
           type="button"
           className="room-selector-btn"
           onClick={onOpenRoomList}
-          title="คลิกเพื่อเปลี่ยนกระดานหรือสลับห้อง"
+          title="สลับห้อง/กระดาน"
         >
-          <LayoutGrid size={16} style={{ color: 'var(--accent-color)' }} />
+          <LayoutGrid size={15} style={{ color: 'var(--accent-color)' }} />
           <span>{activeRoom ? activeRoom.name : 'กำลังโหลด...'}</span>
           {activeRoom && activeRoom.is_protected === 1 && (
-            <Lock size={12} style={{ color: '#f59e0b' }} title="กระดานนี้มีรหัสผ่าน" />
+            <Lock size={12} style={{ color: '#f59e0b' }} />
           )}
           <ChevronDown size={14} style={{ opacity: 0.6 }} />
         </button>
       </div>
 
-      {/* Right Action Bar */}
+      {/* Control Actions */}
       <div className="header-actions">
-        {/* Layout Mode Toggle */}
+        {/* Layout Switcher (Grid/Freeform) */}
         <button
           type="button"
-          className="btn-secondary"
+          className="btn-secondary header-pill-btn"
           onClick={onToggleLayout}
-          title={isFreeform ? 'สลับเป็นโหมดจัดเรียงตาราง Grid' : 'สลับเป็นโหมดลากย้ายอิสระ Freeform'}
+          title={isFreeform ? 'สลับเป็น Grid' : 'สลับเป็น อิสระ'}
         >
-          {isFreeform ? <Grid size={16} /> : <Move size={16} />}
-          <span>{isFreeform ? 'โหมด Grid' : 'โหมด อิสระ'}</span>
+          {isFreeform ? <Grid size={15} /> : <Move size={15} />}
+          <span className="btn-label">{isFreeform ? 'Grid' : 'อิสระ'}</span>
         </button>
 
-        {/* User Display Name Pill */}
+        {/* User Badge */}
         <button
           type="button"
           className="user-badge-btn"
           onClick={onOpenEditName}
-          title="คลิกเพื่อเปลี่ยนชื่อของคุณ"
+          title="เปลี่ยนชื่อ"
         >
           <div className="user-avatar">
             {(userName || 'U').charAt(0).toUpperCase()}
           </div>
-          <span>คุณ: {userName || 'ไม่ระบุชื่อ'}</span>
+          <span className="user-badge-name">คุณ: {userName || 'ผู้ใช้'}</span>
         </button>
 
-        {/* Share Board Button */}
+        {/* Share Button */}
         <button
           type="button"
-          className="btn-icon"
+          className="btn-icon header-tool-icon"
           onClick={onShareRoom}
-          title="คัดลอกลิงก์แชร์กระดานนี้"
+          title="แชร์ลิงก์"
         >
-          <Share2 size={18} />
+          <Share2 size={16} />
         </button>
 
-        {/* Dark/Light Theme Toggle */}
+        {/* Theme Button */}
         <button
           type="button"
-          className="btn-icon"
+          className="btn-icon header-tool-icon"
           onClick={onToggleTheme}
-          title={isDarkMode ? 'สลับเป็น Theme สว่าง' : 'สลับเป็น Theme มืด'}
+          title="เปลี่ยนธีม"
         >
-          {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
+          {isDarkMode ? <Sun size={16} /> : <Moon size={16} />}
         </button>
 
-        {/* Create Room Button */}
+        {/* Create Room Button (Secondary) */}
         <button
           type="button"
-          className="btn-secondary"
+          className="btn-secondary header-pill-btn header-add-room-btn"
           onClick={onOpenCreateRoom}
+          title="สร้างกระดานใหม่"
         >
-          <Plus size={16} />
-          กระดานใหม่
+          <Plus size={15} />
+          <span className="btn-label">สร้างห้อง</span>
         </button>
 
-        {/* Write Note Primary Button */}
+        {/* Write Post-it Primary Button */}
         <button
           type="button"
-          className="btn-primary"
+          className="btn-primary header-write-btn"
           onClick={onOpenCreateNote}
         >
-          <Plus size={18} />
-          เขียน Post-it
+          <Plus size={16} />
+          <span>เขียน Post-it</span>
         </button>
       </div>
     </header>

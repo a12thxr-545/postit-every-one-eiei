@@ -162,6 +162,8 @@ export default function PostItNote({
     minute: '2-digit',
   });
 
+  const cardWidth = typeof window !== 'undefined' && window.innerWidth <= 640 ? 215 : 240;
+
   return (
     <div
       ref={noteRef}
@@ -169,8 +171,8 @@ export default function PostItNote({
       style={
         isFreeform
           ? {
-              left: `${note.x_pos}px`,
-              top: `${note.y_pos}px`,
+              left: `min(${Math.max(10, note.x_pos || 10)}px, calc(100vw - ${cardWidth + 14}px))`,
+              top: `${Math.max(10, note.y_pos || 10)}px`,
               zIndex: note.z_index || 1,
               transform: isDragging ? 'scale(1.04) rotate(0deg)' : `rotate(${rotation.current}deg)`,
             }

@@ -67,7 +67,7 @@ export default function Whiteboard({
             <Pin size={14} style={{ color: 'var(--accent-color)' }} /> ทั้งหมด {notes.length} แผ่น
           </span>
           {isFreeform && (
-            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 4 }}>
+            <span className="desktop-only-hint" style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 4 }}>
               <Sparkles size={14} style={{ color: '#f59e0b' }} /> ดับเบิ้ลคลิกบนพื้นที่ว่างเพื่อวาง Post-it ใหม่ได้ทันที
             </span>
           )}

@@ -250,10 +250,14 @@ export default function App() {
 
   const handleCreateNote = async (noteData) => {
     try {
+      const isMobile = window.innerWidth <= 640;
+      const maxSpawnX = isMobile ? 110 : 280;
       const payload = {
         ...noteData,
-        x_pos: presetNotePos ? presetNotePos.x : Math.floor(Math.random() * 300) + 80,
-        y_pos: presetNotePos ? presetNotePos.y : Math.floor(Math.random() * 200) + 80,
+        x_pos: presetNotePos
+          ? Math.max(10, Math.min(presetNotePos.x, window.innerWidth - (isMobile ? 230 : 290)))
+          : Math.floor(Math.random() * maxSpawnX) + 20,
+        y_pos: presetNotePos ? presetNotePos.y : Math.floor(Math.random() * 160) + 70,
       };
 
       const storedPwd = sessionStorage.getItem(`room_pwd_${activeRoomId}`) || '';
