@@ -1,0 +1,17 @@
+# Render Blueprint Specification File
+# https://render.com/docs/blueprint-spec
+
+services:
+  - type: web
+    name: postit-every-one
+    runtime: node
+    region: singapore
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: node server.js
+    healthCheckPath: /api/rooms
+    envVars:
+      - key: VITE_SUPABASE_URL
+        sync: false
+      - key: VITE_SUPABASE_ANON_KEY
+        sync: false
