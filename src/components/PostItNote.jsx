@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Heart, Trash2, Palette, X, Maximize2 } from 'lucide-react';
+import { Heart, Trash2, Palette, X, Maximize2, GripHorizontal } from 'lucide-react';
 
 const COLORS = ['yellow', 'peach', 'green', 'blue', 'purple', 'pink', 'white'];
 
@@ -90,7 +90,12 @@ export default function PostItNote({
 
   const handleMouseDown = (e) => {
     if (!isFreeform) return;
-    if (e.target.closest('button') || e.target.closest('textarea') || e.target.closest('.no-drag')) {
+    if (
+      e.target.closest('button') ||
+      e.target.closest('textarea') ||
+      e.target.closest('.no-drag') ||
+      e.target.closest('.postit-body')
+    ) {
       return;
     }
 
@@ -107,7 +112,12 @@ export default function PostItNote({
 
   const handleTouchStart = (e) => {
     if (!isFreeform) return;
-    if (e.target.closest('button') || e.target.closest('textarea') || e.target.closest('.no-drag')) {
+    if (
+      e.target.closest('button') ||
+      e.target.closest('textarea') ||
+      e.target.closest('.no-drag') ||
+      e.target.closest('.postit-body')
+    ) {
       return;
     }
 
@@ -232,8 +242,10 @@ export default function PostItNote({
     <div
       ref={noteRef}
       className={`postit-card postit-${note.color || 'yellow'} font-${note.font_style || 'sans'} ${
-        isSearchMatched ? 'search-matched' : ''
-      } ${isSearchDimmed ? 'search-dimmed' : ''}`}
+        note.image_url ? 'has-image' : ''
+      } ${isDragging ? 'is-dragging' : ''} ${isSearchMatched ? 'search-matched' : ''} ${
+        isSearchDimmed ? 'search-dimmed' : ''
+      }`}
       style={
         isFreeform
           ? {
@@ -241,7 +253,6 @@ export default function PostItNote({
               top: `${Math.max(0, note.y_pos || 0)}px`,
               zIndex: isDragging ? 900 : isSearchMatched ? 850 : Math.min(note.z_index || 1, 800),
               transform: isDragging ? 'scale(1.04) rotate(0deg)' : `rotate(${rotation.current}deg)`,
-              touchAction: 'none',
             }
           : {
               transform: `rotate(${rotation.current}deg)`,
@@ -251,44 +262,43 @@ export default function PostItNote({
       onTouchStart={handleTouchStart}
       onClick={() => onBringToFront(note.id)}
     >
-      {/* Tape Decorator */}
-      <div className="postit-tape" />
+      {/* Tape Decorator & Drag Handle */}
+      <div className="postit-tape" title="ลากตรงนี้หรือที่ขอบเพื่อย้าย Post-it" />
 
-      {/* Note Header */}
-      <div className="postit-header">
+      {/* Note Header (Drag Handle) */}
+      <div className="postit-header" title="ลากตรงนี้หรือที่ขอบเพื่อย้าย Post-it">
         <div className="postit-author">
           <div className="postit-author-avatar">
             {(note.author_name || 'U').charAt(0).toUpperCase()}
           </div>
-          <span style={{ maxWidth: 140, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          <span style={{ maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {renderHighlightedText(note.author_name || 'ไม่ระบุชื่อ', searchTerm)}
           </span>
         </div>
-        <span className="postit-time">{formattedTime}</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          {isFreeform && (
+            <GripHorizontal
+              size={14}
+              className="postit-drag-grip"
+              style={{ opacity: 0.45, cursor: isDragging ? 'grabbing' : 'grab' }}
+              title="ลากเพื่อย้าย Post-it"
+            />
+          )}
+          <span className="postit-time">{formattedTime}</span>
+        </div>
       </div>
 
       {/* Optional Attached Image */}
       {note.image_url && (
         <div
-          style={{ marginBottom: 8, borderRadius: 4, overflow: 'hidden', cursor: 'pointer' }}
-          className="no-drag"
+          className="postit-image-container no-drag"
           onClick={(e) => {
             e.stopPropagation();
             if (onViewNote) onViewNote(note);
           }}
           title="คลิกเพื่อขยายดู Post-it แบบขยายใหญ่"
         >
-          <img
-            src={note.image_url}
-            alt="Attached"
-            style={{
-              width: '100%',
-              maxHeight: 140,
-              objectFit: 'cover',
-              borderRadius: 4,
-              display: 'block',
-            }}
-          />
+          <img src={note.image_url} alt="Attached" className="postit-image" />
         </div>
       )}
 
@@ -296,7 +306,8 @@ export default function PostItNote({
       <div
         className="postit-body"
         onClick={(e) => {
-          // If in grid mode or user single clicks text area
+          onBringToFront(note.id);
+          // If in grid mode or user clicks text area
           if (!isFreeform && onViewNote) {
             onViewNote(note);
           }
